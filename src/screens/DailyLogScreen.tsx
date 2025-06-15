@@ -112,19 +112,17 @@ export default function DailyLogScreen() {
 
   return (
     <View style={styles.container}>
-      <Card style={styles.filterCard}>
-        <Card.Content>
-          <SegmentedButtons
-            value={viewMode}
-            onValueChange={value => setViewMode(value as ViewMode)}
-            buttons={[
-              { value: 'today', label: 'Today' },
-              { value: 'week', label: 'This Week' },
-              { value: 'all', label: 'All Time' },
-            ]}
-          />
-        </Card.Content>
-      </Card>
+      <View style={styles.filterContainer}>
+        <SegmentedButtons
+          value={viewMode}
+          onValueChange={value => setViewMode(value as ViewMode)}
+          buttons={[
+            { value: 'today', label: 'Today' },
+            { value: 'week', label: 'This Week' },
+            { value: 'all', label: 'All Time' },
+          ]}
+        />
+      </View>
 
       <ScrollView style={styles.scrollContainer}>
         {organizedEntries.length === 0 ? (
@@ -233,7 +231,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  filterCard: {
+  filterContainer: {
     margin: 16,
     marginBottom: 8,
   },
