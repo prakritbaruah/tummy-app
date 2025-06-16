@@ -31,7 +31,7 @@ export default function AddScreen() {
         // Snap back to original position
         Animated.timing(slideAnim, {
           toValue: screenHeight * (1 - addScreenHeightRatio),
-          duration: 200,
+          duration: 100,
           useNativeDriver: false,
         }).start();
       }
@@ -42,7 +42,7 @@ export default function AddScreen() {
     // Slide up animation when component mounts
     Animated.timing(slideAnim, {
       toValue: screenHeight * (1 - addScreenHeightRatio),
-      duration: 400,
+      duration: 100,
       useNativeDriver: false,
     }).start();
   }, []);
@@ -51,7 +51,7 @@ export default function AddScreen() {
     // Slide down animation before navigating back
     Animated.timing(slideAnim, {
       toValue: screenHeight,
-      duration: 300,
+      duration: 100,
       useNativeDriver: false,
     }).start(() => {
       navigation.goBack();
