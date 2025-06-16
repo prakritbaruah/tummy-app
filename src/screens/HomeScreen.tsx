@@ -9,6 +9,9 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <Text variant="headlineMedium" style={styles.title}>
+        Welcome to Tummy
+      </Text>
       <Card style={styles.card}>
         <Card.Content>
           <Text variant="titleMedium">Today's Summary</Text>
@@ -25,6 +28,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#f5f5f5',
+  },
+  title: {
+    marginBottom: 16,
+    textAlign: 'center',
   },
   card: {
     marginBottom: 16,
