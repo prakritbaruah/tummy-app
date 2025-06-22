@@ -13,13 +13,22 @@ import SymptomsScreen from './src/screens/SymptomsScreen';
 import BowelScreen from './src/screens/BowelScreen';
 import DailyLogScreen from './src/screens/DailyLogScreen';
 import AddScreen from './src/screens/AddScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
+
+// Import authentication components
+import { AuthGuard } from './src/components/auth/AuthGuard';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function TabNavigator() {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: '#999',
+      }}
+    >
       <Tab.Screen 
         name="Home" 
         component={HomeScreen}
@@ -56,6 +65,16 @@ function TabNavigator() {
           ),
         }}
       />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <IconButton icon="account-outline" size={size} iconColor={color} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -65,37 +84,39 @@ export default function App() {
     <StoreProvider store={store}>
       <PaperProvider>
         <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen 
-              name="Main" 
-              component={TabNavigator}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="AddModal" 
-              component={AddScreen}
-              options={{ 
-                presentation: 'transparentModal',
-                headerShown: false,
-                animation: 'slide_from_bottom'
-              }}
-            />
-            <Stack.Screen 
-              name="FoodLog" 
-              component={FoodLogScreen}
-              options={{ title: 'Add Meal' }}
-            />
-            <Stack.Screen 
-              name="Symptoms" 
-              component={SymptomsScreen}
-              options={{ title: 'Add Symptoms' }}
-            />
-            <Stack.Screen 
-              name="Bowel" 
-              component={BowelScreen}
-              options={{ title: 'Add Bowel Movement' }}
-            />
-          </Stack.Navigator>
+          <AuthGuard>
+            <Stack.Navigator>
+              <Stack.Screen 
+                name="Main" 
+                component={TabNavigator}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="AddModal" 
+                component={AddScreen}
+                options={{ 
+                  presentation: 'transparentModal',
+                  headerShown: false,
+                  animation: 'slide_from_bottom'
+                }}
+              />
+              <Stack.Screen 
+                name="FoodLog" 
+                component={FoodLogScreen}
+                options={{ title: 'Add Meal' }}
+              />
+              <Stack.Screen 
+                name="Symptoms" 
+                component={SymptomsScreen}
+                options={{ title: 'Add Symptoms' }}
+              />
+              <Stack.Screen 
+                name="Bowel" 
+                component={BowelScreen}
+                options={{ title: 'Add Bowel Movement' }}
+              />
+            </Stack.Navigator>
+          </AuthGuard>
         </NavigationContainer>
       </PaperProvider>
     </StoreProvider>

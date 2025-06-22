@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import foodReducer from './foodSlice';
 import symptomsReducer from './symptomsSlice';
 import bowelReducer from './bowelSlice';
+import authReducer from './authSlice';
 
 export const store = configureStore({
   reducer: {
     food: foodReducer,
     symptoms: symptomsReducer,
     bowel: bowelReducer,
+    auth: authReducer,
   },
 });
 
