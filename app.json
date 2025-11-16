@@ -24,7 +24,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.prakritbaruah.tummy"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,9 +35,7 @@
         "projectId": "a42cc9db-42ea-4c41-82ab-b7b1028a89a4"
       }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/a42cc9db-42ea-4c41-82ab-b7b1028a89a4"
     }

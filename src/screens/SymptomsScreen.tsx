@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, Button, Card, SegmentedButtons, useTheme } from 'react-native-paper';
+import { Text, Button, Card, SegmentedButtons } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addSymptomEntry } from '../store/symptomsSlice';
@@ -12,11 +12,11 @@ import {
   SymptomData,
   SymptomEntry 
 } from '../types/symptoms';
+import { theme, commonStyles } from '../styles';
 
 export default function SymptomsScreen() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [symptomInputs, setSymptomInputs] = useState<SymptomData[]>([]);
-  const theme = useTheme();
   
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -144,9 +144,9 @@ export default function SymptomsScreen() {
                 maximumValue={1}
                 step={0.25}
                 style={styles.slider}
-                minimumTrackTintColor="#1976d2"
-                maximumTrackTintColor="#e0e0e0"
-                thumbTintColor="#1976d2"
+                minimumTrackTintColor={theme.colors.primary}
+                maximumTrackTintColor={theme.colors.trackInactive}
+                thumbTintColor={theme.colors.primary}
               />
               <Text variant="bodyMedium" style={styles.currentSeverity}>
                 {input.severity.charAt(0).toUpperCase() + input.severity.slice(1)}
@@ -174,34 +174,34 @@ export default function SymptomsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   contentContainer: {
-    padding: 16,
+    padding: theme.spacing.md,
   },
   heading: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
     textAlign: 'center',
-    color: '#1a1a1a',
+    color: theme.colors.text,
   },
   symptomCard: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
     elevation: 2,
   },
   label: {
-    marginBottom: 8,
-    marginTop: 16,
+    marginBottom: theme.spacing.sm,
+    marginTop: theme.spacing.md,
     fontWeight: '600',
   },
   symptomTitle: {
-    marginBottom: 16,
-    color: '#1976d2',
+    marginBottom: theme.spacing.md,
+    color: theme.colors.primary,
   },
   checklist: {
-    marginBottom: 16,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 8,
+    marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.spacing.sm,
+    padding: theme.spacing.sm,
     elevation: 1,
   },
   checkboxRow: {
@@ -211,48 +211,48 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: theme.colors.borderLight,
   },
   selectedRow: {
-    backgroundColor: '#e3f2fd',
-    borderRadius: 4,
+    backgroundColor: theme.colors.infoBackground,
+    borderRadius: theme.spacing.xs,
   },
   checkboxLabel: {
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.textTertiary,
   },
   selectedText: {
-    color: '#1976d2',
+    color: theme.colors.primary,
     fontWeight: '500',
   },
   checkmark: {
-    color: '#1976d2',
+    color: theme.colors.primary,
     fontSize: 18,
     fontWeight: 'bold',
   },
   segmentedButtons: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   sliderContainer: {
-    marginBottom: 16,
-    paddingHorizontal: 8,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
   },
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
   slider: {
     height: 40,
   },
   currentSeverity: {
     textAlign: 'center',
-    marginTop: 8,
-    color: '#1976d2',
+    marginTop: theme.spacing.sm,
+    color: theme.colors.primary,
     fontWeight: '500',
   },
   addAllButton: {
-    marginTop: 8,
-    marginBottom: 24,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
   },
 }); 

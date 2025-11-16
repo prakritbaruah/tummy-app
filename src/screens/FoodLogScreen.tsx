@@ -4,6 +4,7 @@ import { TextInput, Button, Card, Text } from 'react-native-paper';
 import { useAppDispatch } from '../store';
 import { addFoodEntry } from '../store/foodSlice';
 import { FoodEntry } from '../types/food';
+import { theme, commonStyles } from '../styles';
 
 export default function FoodLogScreen() {
   const [showTextInput, setShowTextInput] = useState(false);
@@ -51,7 +52,7 @@ export default function FoodLogScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.container}>
       <Text variant="headlineMedium" style={styles.heading}>
         Track your meals
       </Text>
@@ -113,45 +114,40 @@ export default function FoodLogScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-  },
   heading: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
     textAlign: 'center',
-    color: '#1a1a1a',
+    color: theme.colors.text,
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
   },
   button: {
     flex: 1,
-    marginHorizontal: 8,
+    marginHorizontal: theme.spacing.sm,
   },
   explanationContainer: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: '#e3f2fd',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#1976d2',
+    marginTop: theme.spacing.lg,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.infoBackground,
+    borderRadius: theme.spacing.sm,
+    borderLeftWidth: theme.spacing.xs,
+    borderLeftColor: theme.colors.primary,
   },
   explanationText: {
-    color: '#1976d2',
+    color: theme.colors.primary,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   inputContainer: {
-    marginTop: 20,
+    marginTop: theme.spacing.lg,
   },
   textInput: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   submitButton: {
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
   },
 }); 

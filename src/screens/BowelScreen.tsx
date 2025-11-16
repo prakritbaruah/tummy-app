@@ -7,6 +7,7 @@ import { addBowelEntry } from '../store/bowelSlice';
 import { useNavigation } from '@react-navigation/native';
 import { Timing } from '../types/common';
 import { BowelEntry, Urgency } from '../types/bowel';
+import { theme, commonStyles } from '../styles';
 
 export default function BowelScreen() {
   const [urgency, setUrgency] = useState<Urgency>('Low');
@@ -56,7 +57,7 @@ export default function BowelScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.container}>
       <Text variant="headlineMedium" style={styles.heading}>
         Track your movements
       </Text>
@@ -85,9 +86,9 @@ export default function BowelScreen() {
           maximumValue={1}
           step={0.5}
           style={styles.slider}
-          minimumTrackTintColor="#1976d2"
-          maximumTrackTintColor="#e0e0e0"
-          thumbTintColor="#1976d2"
+          minimumTrackTintColor={theme.colors.primary}
+          maximumTrackTintColor={theme.colors.trackInactive}
+          thumbTintColor={theme.colors.primary}
         />
         <Text variant="bodyMedium" style={styles.currentValue}>
           {urgency.charAt(0).toUpperCase() + urgency.slice(1)}
@@ -107,9 +108,9 @@ export default function BowelScreen() {
           maximumValue={7}
           step={1}
           style={styles.slider}
-          minimumTrackTintColor="#1976d2"
-          maximumTrackTintColor="#e0e0e0"
-          thumbTintColor="#1976d2"
+          minimumTrackTintColor={theme.colors.primary}
+          maximumTrackTintColor={theme.colors.trackInactive}
+          thumbTintColor={theme.colors.primary}
         />
         <Text variant="bodyMedium" style={styles.currentValue}>
           Type {consistency}
@@ -141,51 +142,45 @@ export default function BowelScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-  },
   heading: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
     textAlign: 'center',
-    color: '#1a1a1a',
+    color: theme.colors.text,
   },
   label: {
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   sliderContainer: {
-    marginBottom: 16,
-    paddingHorizontal: 8,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
   },
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
   slider: {
     height: 40,
   },
   currentValue: {
     textAlign: 'center',
-    marginTop: 8,
-    color: '#1976d2',
+    marginTop: theme.spacing.sm,
+    color: theme.colors.primary,
     fontWeight: '500',
   },
   segmentedButtons: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   checkboxContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   checkbox: {
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: theme.spacing.xs,
   },
   button: {
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
   },
-
 }); 

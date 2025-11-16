@@ -5,6 +5,7 @@ import { useAppSelector } from '../store';
 import { FoodEntry } from '../types/food';
 import { SymptomEntry } from '../types/symptoms';
 import { BowelEntry } from '../types/bowel';
+import { theme, commonStyles } from '../styles';
 
 interface DayEntry {
   date: string;
@@ -229,48 +230,48 @@ export default function DailyLogScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   filterContainer: {
-    margin: 16,
-    marginBottom: 8,
+    margin: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   scrollContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.spacing.md,
   },
   dayCard: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
     elevation: 2,
   },
   emptyCard: {
-    marginTop: 32,
+    marginTop: theme.spacing.xl,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#666',
+    color: theme.colors.textSecondary,
   },
   dateHeader: {
     fontWeight: 'bold',
-    color: '#1976d2',
-    marginBottom: 4,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
   },
   dateSubheader: {
-    color: '#666',
-    marginBottom: 16,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.md,
   },
   timingSection: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   timingTitle: {
     fontWeight: '600',
-    marginBottom: 8,
-    color: '#1976d2',
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.primary,
     fontSize: 16,
   },
   entryItem: {
-    marginBottom: 4,
-    paddingLeft: 16,
+    marginBottom: theme.spacing.xs,
+    paddingLeft: theme.spacing.md,
   },
   entryRow: {
     flexDirection: 'row',
@@ -278,14 +279,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   entryText: {
-    color: '#333',
+    color: theme.colors.textTertiary,
     flex: 1,
   },
   entryTime: {
-    color: '#666',
+    color: theme.colors.textSecondary,
     fontSize: 12,
   },
-
   divider: {
     marginVertical: 12,
   },
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryText: {
-    color: '#666',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
 }); 

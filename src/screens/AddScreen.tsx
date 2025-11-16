@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Animated, Dimensions, TouchableWithoutFeedback, PanResponder } from 'react-native';
 import { Button, Text, Card } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import { theme } from '../styles';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -145,25 +146,25 @@ const styles = StyleSheet.create({
     marginHorizontal: 0, // Remove horizontal margins for full width
     marginTop: 0,
     marginBottom: 0,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: theme.spacing.xl,
+    borderTopRightRadius: theme.spacing.xl,
     borderBottomLeftRadius: 0, // Remove bottom radius for full bottom coverage
     borderBottomRightRadius: 0,
   },
   cardContent: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 32, // Extra padding at bottom for tab bar clearance
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl, // Extra padding at bottom for tab bar clearance
   },
   title: {
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   buttonContainer: {
-    gap: 16,
-    marginBottom: 24,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   button: {
-    paddingVertical: 8,
+    paddingVertical: theme.spacing.sm,
   },
 }); 
