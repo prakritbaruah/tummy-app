@@ -12,7 +12,7 @@ import { theme, commonStyles } from '../styles';
 export default function BowelScreen() {
   const [urgency, setUrgency] = useState<Urgency>('Low');
   const [consistency, setConsistency] = useState(4);
-  const [timing, setTiming] = useState<Timing>('Morning');
+  const [timing, setTiming] = useState<Timing>('morning');
   const [mucusPresent, setMucusPresent] = useState(false);
   const [bloodPresent, setBloodPresent] = useState(false);
   
@@ -34,7 +34,7 @@ export default function BowelScreen() {
     // Reset form
     setUrgency('Low');
     setConsistency(4);
-    setTiming('Morning');
+    setTiming('morning');
     setMucusPresent(false);
     setBloodPresent(false);
     

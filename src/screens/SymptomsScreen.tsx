@@ -31,7 +31,7 @@ export default function SymptomsScreen() {
         // Add new symptom input with default values
         setSymptomInputs(inputs => [...inputs, {
           name: symptom as typeof SYMPTOMS[number],
-          timing: 'Morning',
+          timing: 'morning',
           severity: 'Moderate'
         }]);
         return [...prev, symptom];

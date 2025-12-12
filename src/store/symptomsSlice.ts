@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { SymptomEntry, SymptomsState } from '../types/symptoms';
+import { SymptomEntry, SymptomsState } from '@/../types/symptoms';
 
 const initialState: SymptomsState = {
   entries: [],

@@ -1,9 +1,10 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider, IconButton } from 'react-native-paper';
 import { Provider as StoreProvider } from 'react-redux';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from './src/store';
 
 // Import screens
@@ -17,7 +18,13 @@ import AddScreen from './src/screens/AddScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+function AddTabPlaceholder() {
+  return null;
+}
+
 function TabNavigator() {
+  const navigation = useNavigation();
+
   return (
     <Tab.Navigator>
       <Tab.Screen 
@@ -32,7 +39,7 @@ function TabNavigator() {
       />
       <Tab.Screen 
         name="Add" 
-        component={AddScreen}
+        component={AddTabPlaceholder}
         options={{
           title: 'Add',
           tabBarIcon: ({ color, size }) => (
@@ -63,41 +70,43 @@ function TabNavigator() {
 export default function App() {
   return (
     <StoreProvider store={store}>
-      <PaperProvider>
-        <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen 
-              name="Main" 
-              component={TabNavigator}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="AddModal" 
-              component={AddScreen}
-              options={{ 
-                presentation: 'transparentModal',
-                headerShown: false,
-                animation: 'slide_from_bottom'
-              }}
-            />
-            <Stack.Screen 
-              name="FoodLog" 
-              component={FoodLogScreen}
-              options={{ title: 'Add Meal' }}
-            />
-            <Stack.Screen 
-              name="Symptoms" 
-              component={SymptomsScreen}
-              options={{ title: 'Add Symptoms' }}
-            />
-            <Stack.Screen 
-              name="Bowel" 
-              component={BowelScreen}
-              options={{ title: 'Add Bowel Movement' }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </PaperProvider>
+      <SafeAreaProvider>
+        <PaperProvider>
+          <NavigationContainer>
+            <Stack.Navigator>
+              <Stack.Screen 
+                name="Main" 
+                component={TabNavigator}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen 
+                name="AddModal" 
+                component={AddScreen}
+                options={{ 
+                  presentation: 'transparentModal',
+                  headerShown: false,
+                  animation: 'slide_from_bottom'
+                }}
+              />
+              <Stack.Screen 
+                name="FoodLog" 
+                component={FoodLogScreen}
+                options={{ title: 'Add Meal' }}
+              />
+              <Stack.Screen 
+                name="Symptoms" 
+                component={SymptomsScreen}
+                options={{ title: 'Add Symptoms' }}
+              />
+              <Stack.Screen 
+                name="Bowel" 
+                component={BowelScreen}
+                options={{ title: 'Add Bowel Movement' }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </PaperProvider>
+      </SafeAreaProvider>
     </StoreProvider>
   );
 }

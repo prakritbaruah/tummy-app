@@ -1,5 +1,6 @@
 // Common types used across the application
-export type Timing = 'Morning' | 'Afternoon' | 'Evening';
+// Use lowercase strings to match UI values and filters
+export type Timing = 'morning' | 'afternoon' | 'evening';
 
 // Base interface for all entries
 export interface BaseEntry {
