@@ -1,11 +1,19 @@
-import React from 'react';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider, IconButton } from 'react-native-paper';
 import { Provider as StoreProvider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+import { Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
+import {
+  LeagueSpartan_600SemiBold,
+  LeagueSpartan_700Bold,
+} from '@expo-google-fonts/league-spartan';
+import * as SplashScreen from 'expo-splash-screen';
 import { store } from './src/store';
+import { paperTheme, navigationTheme } from './src/styles';
 
 // Import screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -23,10 +31,22 @@ function AddTabPlaceholder() {
 }
 
 function TabNavigator() {
-  const navigation = useNavigation();
-
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: paperTheme.colors.primary,
+        tabBarInactiveTintColor: paperTheme.colors.onSurfaceVariant,
+        tabBarStyle: { backgroundColor: paperTheme.colors.surface },
+        tabBarLabelStyle: {
+          fontFamily: paperTheme.fonts.labelMedium.fontFamily,
+        },
+        headerStyle: { backgroundColor: paperTheme.colors.surface },
+        headerTitleStyle: {
+          fontFamily: paperTheme.fonts.titleMedium.fontFamily,
+          color: paperTheme.colors.onSurface,
+        },
+      }}
+    >
       <Tab.Screen 
         name="Home" 
         component={HomeScreen}
@@ -68,11 +88,33 @@ function TabNavigator() {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    NunitoRegular: Nunito_400Regular,
+    NunitoSemiBold: Nunito_600SemiBold,
+    NunitoBold: Nunito_700Bold,
+    LeagueSpartanSemiBold: LeagueSpartan_600SemiBold,
+    LeagueSpartanBold: LeagueSpartan_700Bold,
+  });
+
+  useEffect(() => {
+    void SplashScreen.preventAutoHideAsync();
+  }, []);
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <StoreProvider store={store}>
       <SafeAreaProvider>
-        <PaperProvider>
-          <NavigationContainer>
+        <PaperProvider theme={paperTheme}>
+          <NavigationContainer theme={navigationTheme}>
             <Stack.Navigator>
               <Stack.Screen 
                 name="Main" 

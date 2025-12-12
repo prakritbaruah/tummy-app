@@ -10,8 +10,10 @@ export const commonStyles = StyleSheet.create({
   title: {
     marginBottom: theme.spacing.md,
     textAlign: 'center',
+    color: theme.colors.textHeading,
   },
   card: {
     marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
   },
 } as const); 
