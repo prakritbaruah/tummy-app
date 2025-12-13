@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, Button, Card } from 'react-native-paper';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text, Button, Card, List, Checkbox } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useAppDispatch } from '../store';
 import { addSymptomEntry } from '../store/symptomsSlice';
@@ -18,6 +18,7 @@ export default function SymptomsScreen() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [symptomInputs, setSymptomInputs] = useState<SymptomData[]>([]);
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
+  const [symptomListExpanded, setSymptomListExpanded] = useState(false);
   
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -87,29 +88,39 @@ export default function SymptomsScreen() {
         Track your symptoms
       </Text>
       <Text variant="titleMedium" style={styles.label}>Select Symptoms</Text>
-      <View style={styles.checklist}>
-        {SYMPTOMS.map((symptom) => (
-          <TouchableOpacity 
-            key={symptom} 
-            style={[
-              styles.checkboxRow,
-              selectedSymptoms.includes(symptom) && styles.selectedRow
-            ]}
-            onPress={() => handleSymptomToggle(symptom)}
+      <View style={styles.dropdownContainer}>
+        <List.Section style={styles.dropdownCard}>
+          <List.Accordion
+            title={
+              selectedSymptoms.length > 0
+                ? `${selectedSymptoms.length} symptom${selectedSymptoms.length > 1 ? 's' : ''} selected`
+                : 'Choose symptoms'
+            }
+            expanded={symptomListExpanded}
+            onPress={() => setSymptomListExpanded(prev => !prev)}
+            left={() => null}
+            right={props => <List.Icon {...props} icon={symptomListExpanded ? 'chevron-up' : 'chevron-down'} />}
           >
-            <Text 
-              style={[
-                styles.checkboxLabel,
-                selectedSymptoms.includes(symptom) && styles.selectedText
-              ]}
-            >
-              {symptom}
-            </Text>
-            <Text style={styles.checkmark}>
-              {selectedSymptoms.includes(symptom) ? '✓' : ''}
-            </Text>
-          </TouchableOpacity>
-        ))}
+            {SYMPTOMS.map(symptom => (
+              <List.Item
+                key={symptom}
+                title={symptom}
+                onPress={() => handleSymptomToggle(symptom)}
+                right={() => (
+                  <Checkbox
+                    status={selectedSymptoms.includes(symptom) ? 'checked' : 'unchecked'}
+                    onPress={() => handleSymptomToggle(symptom)}
+                  />
+                )}
+              />
+            ))}
+          </List.Accordion>
+        </List.Section>
+        {selectedSymptoms.length > 0 && (
+          <Text variant="bodySmall" style={styles.selectedHint}>
+            {selectedSymptoms.join(', ')}
+          </Text>
+        )}
       </View>
 
       {symptomInputs.length > 0 && (
@@ -186,38 +197,17 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     color: theme.colors.primary,
   },
-  checklist: {
+  dropdownContainer: {
     marginBottom: theme.spacing.md,
+  },
+  dropdownCard: {
     backgroundColor: theme.colors.white,
     borderRadius: theme.spacing.sm,
-    padding: theme.spacing.sm,
-    elevation: 1,
+    overflow: 'hidden',
   },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  selectedRow: {
-    backgroundColor: theme.colors.infoBackground,
-    borderRadius: theme.spacing.xs,
-  },
-  checkboxLabel: {
-    fontSize: 16,
+  selectedHint: {
+    marginTop: theme.spacing.xs,
     color: theme.colors.textSecondary,
-  },
-  selectedText: {
-    color: theme.colors.primary,
-    fontWeight: '500',
-  },
-  checkmark: {
-    color: theme.colors.primary,
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   sliderContainer: {
     marginBottom: theme.spacing.md,
