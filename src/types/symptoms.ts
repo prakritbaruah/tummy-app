@@ -1,4 +1,4 @@
-import { BaseEntry, Timing } from './common';
+import { BaseEntry } from './common';
 
 export const SYMPTOMS = [
   'Abdominal Pain',
@@ -17,7 +17,6 @@ export type Severity = 'Low' | 'Mild' | 'Moderate' | 'High' | 'Severe';
 // Base type for symptom data
 export interface SymptomData {
   name: SymptomName;
-  timing: Timing;
   severity: Severity;
 }
 

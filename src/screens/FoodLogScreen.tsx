@@ -150,4 +150,4 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: theme.spacing.sm,
   },
-}); 
+});

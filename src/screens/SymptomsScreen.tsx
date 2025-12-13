@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, Button, Card, SegmentedButtons } from 'react-native-paper';
+import { Text, Button, Card } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
-import { useAppDispatch, useAppSelector } from '../store';
+import { useAppDispatch } from '../store';
 import { addSymptomEntry } from '../store/symptomsSlice';
 import { useNavigation } from '@react-navigation/native';
-import { Timing } from '../types/common';
 import { 
   SYMPTOMS, 
   Severity, 
   SymptomData,
   SymptomEntry 
 } from '../types/symptoms';
-import { theme, commonStyles } from '../styles';
+import { theme } from '../styles';
+import { TimePickerCard } from '../components';
 
 export default function SymptomsScreen() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [symptomInputs, setSymptomInputs] = useState<SymptomData[]>([]);
+  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
   
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -31,7 +32,6 @@ export default function SymptomsScreen() {
         // Add new symptom input with default values
         setSymptomInputs(inputs => [...inputs, {
           name: symptom as typeof SYMPTOMS[number],
-          timing: 'morning',
           severity: 'Moderate'
         }]);
         return [...prev, symptom];
@@ -39,18 +39,15 @@ export default function SymptomsScreen() {
     });
   };
 
-  const handleInputChange = (symptom: string, field: 'timing' | 'severity', value: Timing | Severity | number) => {
-    if (field === 'severity' && typeof value === 'number') {
-      // Convert slider value to severity level
-      const severityLevels: Severity[] = ['Low', 'Mild', 'Moderate', 'High', 'Severe'];
-      const index = Math.round(value * (severityLevels.length - 1));
-      value = severityLevels[index];
-    }
+  const handleSeverityChange = (symptom: string, value: number) => {
+    const severityLevels: Severity[] = ['Low', 'Mild', 'Moderate', 'High', 'Severe'];
+    const index = Math.round(value * (severityLevels.length - 1));
+    const severity = severityLevels[index];
     
     setSymptomInputs(inputs => 
       inputs.map(input => 
         input.name === symptom 
-          ? { ...input, [field]: value }
+          ? { ...input, severity }
           : input
       )
     );
@@ -61,7 +58,7 @@ export default function SymptomsScreen() {
       const newEntry: SymptomEntry = {
         ...input,
         id: Date.now().toString() + input.name,
-        timestamp: Date.now(),
+        timestamp: selectedTime.getTime(),
       };
       dispatch(addSymptomEntry(newEntry));
     });
@@ -69,6 +66,7 @@ export default function SymptomsScreen() {
     // Clear all selections
     setSelectedSymptoms([]);
     setSymptomInputs([]);
+    setSelectedTime(new Date());
     
     // Reset navigation to Daily Log tab (no overlay)
     // TODO: is this the best way to do this?
@@ -114,22 +112,14 @@ export default function SymptomsScreen() {
         ))}
       </View>
 
+      {symptomInputs.length > 0 && (
+        <TimePickerCard value={selectedTime} onChange={setSelectedTime} />
+      )}
+
       {symptomInputs.map((input) => (
         <Card key={input.name} style={styles.symptomCard}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.symptomTitle}>{input.name}</Text>
-            
-            <Text variant="titleSmall" style={styles.label}>Timing</Text>
-            <SegmentedButtons
-              value={input.timing}
-              onValueChange={value => handleInputChange(input.name, 'timing', value as Timing)}
-              buttons={[
-                { value: 'morning', label: 'Morning' },
-                { value: 'afternoon', label: 'Afternoon' },
-                { value: 'evening', label: 'Evening' },
-              ]}
-              style={styles.segmentedButtons}
-            />
 
             <Text variant="titleSmall" style={styles.label}>Severity</Text>
             <View style={styles.sliderContainer}>
@@ -139,7 +129,7 @@ export default function SymptomsScreen() {
               </View>
               <Slider
                 value={getSeverityValue(input.severity)}
-                onValueChange={(value: number) => handleInputChange(input.name, 'severity', value)}
+                onValueChange={(value: number) => handleSeverityChange(input.name, value)}
                 minimumValue={0}
                 maximumValue={1}
                 step={0.25}
@@ -165,8 +155,6 @@ export default function SymptomsScreen() {
           Add Symptoms
         </Button>
       )}
-
-
     </ScrollView>
   );
 }
@@ -186,6 +174,7 @@ const styles = StyleSheet.create({
   },
   symptomCard: {
     marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.infoBackground,
     elevation: 2,
   },
   label: {
@@ -211,7 +200,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
+    borderBottomColor: theme.colors.border,
   },
   selectedRow: {
     backgroundColor: theme.colors.infoBackground,
@@ -219,7 +208,7 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: 16,
-    color: theme.colors.textTertiary,
+    color: theme.colors.textSecondary,
   },
   selectedText: {
     color: theme.colors.primary,
@@ -229,9 +218,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  segmentedButtons: {
-    marginBottom: theme.spacing.md,
   },
   sliderContainer: {
     marginBottom: theme.spacing.md,
@@ -255,4 +241,4 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
   },
-}); 
+});

@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, Card, SegmentedButtons } from 'react-native-paper';
+import { Text, Button } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
-import { useAppDispatch, useAppSelector } from '../store';
+import { useAppDispatch } from '../store';
 import { addBowelEntry } from '../store/bowelSlice';
 import { useNavigation } from '@react-navigation/native';
-import { Timing } from '../types/common';
 import { BowelEntry, Urgency } from '../types/bowel';
-import { theme, commonStyles } from '../styles';
+import { theme } from '../styles';
+import { TimePickerCard } from '../components';
 
 export default function BowelScreen() {
   const [urgency, setUrgency] = useState<Urgency>('Low');
   const [consistency, setConsistency] = useState(4);
-  const [timing, setTiming] = useState<Timing>('morning');
+  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
   const [mucusPresent, setMucusPresent] = useState(false);
   const [bloodPresent, setBloodPresent] = useState(false);
   
@@ -22,19 +22,18 @@ export default function BowelScreen() {
   const handleAddEntry = () => {
     const newEntry: BowelEntry = {
       id: Date.now().toString(),
-      timing,
       urgency,
       consistency,
       mucusPresent,
       bloodPresent,
-      timestamp: Date.now(),
+      timestamp: selectedTime.getTime(),
     };
     dispatch(addBowelEntry(newEntry));
     
     // Reset form
     setUrgency('Low');
     setConsistency(4);
-    setTiming('morning');
+    setSelectedTime(new Date());
     setMucusPresent(false);
     setBloodPresent(false);
     
@@ -57,21 +56,12 @@ export default function BowelScreen() {
   };
 
   return (
-    <View style={commonStyles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <Text variant="headlineMedium" style={styles.heading}>
         Track your movements
       </Text>
-      <Text variant="titleMedium" style={styles.label}>Timing</Text>
-      <SegmentedButtons
-        value={timing}
-        onValueChange={value => setTiming(value as Timing)}
-        buttons={[
-          { value: 'morning', label: 'Morning' },
-          { value: 'afternoon', label: 'Afternoon' },
-          { value: 'evening', label: 'Evening' },
-        ]}
-        style={styles.segmentedButtons}
-      />
+      
+      <TimePickerCard value={selectedTime} onChange={setSelectedTime} />
 
       <Text variant="titleMedium" style={styles.label}>Urgency</Text>
       <View style={styles.sliderContainer}>
@@ -137,11 +127,18 @@ export default function BowelScreen() {
       <Button mode="contained" onPress={handleAddEntry} style={styles.button}>
         Add Entry
       </Button>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  contentContainer: {
+    padding: theme.spacing.md,
+  },
   heading: {
     marginBottom: theme.spacing.lg,
     textAlign: 'center',
@@ -168,9 +165,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: '500',
   },
-  segmentedButtons: {
-    marginBottom: theme.spacing.md,
-  },
   checkboxContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -183,4 +177,4 @@ const styles = StyleSheet.create({
   button: {
     marginTop: theme.spacing.sm,
   },
-}); 
+});

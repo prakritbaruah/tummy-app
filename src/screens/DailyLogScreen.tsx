@@ -27,9 +27,9 @@ export default function DailyLogScreen() {
   const organizedEntries = useMemo(() => {
     // Combine all entries with their types
     const allEntries = [
-      ...foodEntries.map(entry => ({ ...entry, type: 'food' as const })),
-      ...symptomEntries.map(entry => ({ ...entry, type: 'symptom' as const })),
-      ...bowelEntries.map(entry => ({ ...entry, type: 'bowel' as const }))
+      ...foodEntries.map((entry: FoodEntry) => ({ ...entry, type: 'food' as const })),
+      ...symptomEntries.map((entry: SymptomEntry) => ({ ...entry, type: 'symptom' as const })),
+      ...bowelEntries.map((entry: BowelEntry) => ({ ...entry, type: 'bowel' as const }))
     ];
 
     // Group by date
@@ -145,69 +145,41 @@ export default function DailyLogScreen() {
                   {dayEntry.date}
                 </Text>
 
-                {/* Organize entries by timing */}
-                {['evening', 'afternoon', 'morning'].map((timingPeriod) => {
-                  // Get all entries for this timing period
-                  const periodFoodEntries = dayEntry.foodEntries.filter(entry => {
-                    const hour = new Date(entry.timestamp).getHours();
-                    if (timingPeriod === 'morning') return hour >= 5 && hour < 12;
-                    if (timingPeriod === 'afternoon') return hour >= 12 && hour < 18;
-                    return hour >= 18 || hour < 5; // evening
-                  });
-                  
-                  const periodSymptomEntries = dayEntry.symptomEntries.filter(entry => 
-                    entry.timing === timingPeriod
-                  );
-                  
-                  const periodBowelEntries = dayEntry.bowelEntries.filter(entry => 
-                    entry.timing === timingPeriod
-                  );
-
-                  // Combine all entries for this period and sort by timestamp (newest first)
-                  const allPeriodEntries = [
-                    ...periodFoodEntries.map(entry => ({ ...entry, type: 'food' as const })),
-                    ...periodSymptomEntries.map(entry => ({ ...entry, type: 'symptom' as const })),
-                    ...periodBowelEntries.map(entry => ({ ...entry, type: 'bowel' as const }))
+                {/* Show all entries chronologically (newest first) */}
+                {(() => {
+                  const allDayEntries = [
+                    ...dayEntry.foodEntries.map(entry => ({ ...entry, type: 'food' as const })),
+                    ...dayEntry.symptomEntries.map(entry => ({ ...entry, type: 'symptom' as const })),
+                    ...dayEntry.bowelEntries.map(entry => ({ ...entry, type: 'bowel' as const }))
                   ].sort((a, b) => b.timestamp - a.timestamp);
 
-                  if (allPeriodEntries.length === 0) return null;
-
-                  return (
-                    <View key={timingPeriod} style={styles.timingSection}>
-                      <Text variant="titleMedium" style={styles.timingTitle}>
-                        {timingPeriod.charAt(0).toUpperCase() + timingPeriod.slice(1)}
-                      </Text>
-                      
-                        {allPeriodEntries.map((entry) => (
-                         <View key={`${entry.type}-${entry.id}`} style={styles.entryItem}>
-                           <View style={styles.entryRow}>
-                             {entry.type === 'food' && (
-                               <Text variant="bodyMedium" style={styles.entryText}>
-                                 {(entry as FoodEntry).name}
-                               </Text>
-                             )}
-                             
-                             {entry.type === 'symptom' && (
-                               <Text variant="bodyMedium" style={styles.entryText}>
-                                 {(entry as SymptomEntry).name}
-                               </Text>
-                             )}
-                             
-                             {entry.type === 'bowel' && (
-                               <Text variant="bodyMedium" style={styles.entryText}>
-                                 Bowel Movement
-                               </Text>
-                             )}
-                             
-                             <Text variant="bodySmall" style={styles.entryTime}>
-                               {formatTime(entry.timestamp)}
-                             </Text>
-                           </View>
-                         </View>
-                       ))}
+                  return allDayEntries.map((entry) => (
+                    <View key={`${entry.type}-${entry.id}`} style={styles.entryItem}>
+                      <View style={styles.entryRow}>
+                        <Text variant="bodySmall" style={styles.entryTime}>
+                          {formatTime(entry.timestamp)}
+                        </Text>
+                        {entry.type === 'food' && (
+                          <Text variant="bodyMedium" style={styles.entryText}>
+                            {(entry as FoodEntry).name}
+                          </Text>
+                        )}
+                        
+                        {entry.type === 'symptom' && (
+                          <Text variant="bodyMedium" style={styles.entryText}>
+                            {(entry as SymptomEntry).name}
+                          </Text>
+                        )}
+                        
+                        {entry.type === 'bowel' && (
+                          <Text variant="bodyMedium" style={styles.entryText}>
+                            Bowel Movement
+                          </Text>
+                        )}
+                      </View>
                     </View>
-                  );
-                })}
+                  ));
+                })()}
 
                 {/* Summary */}
                 <Divider style={styles.divider} />
@@ -260,31 +232,26 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.md,
   },
-  timingSection: {
-    marginBottom: theme.spacing.md,
-  },
-  timingTitle: {
-    fontWeight: '600',
-    marginBottom: theme.spacing.sm,
-    color: theme.colors.primary,
-    fontSize: 16,
-  },
   entryItem: {
-    marginBottom: theme.spacing.xs,
-    paddingLeft: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   entryRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   entryText: {
-    color: theme.colors.textTertiary,
+    color: theme.colors.text,
     flex: 1,
   },
   entryTime: {
-    color: theme.colors.textSecondary,
-    fontSize: 12,
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
+    minWidth: 70,
+    marginRight: theme.spacing.md,
   },
   divider: {
     marginVertical: 12,
