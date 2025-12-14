@@ -1,8 +1,4 @@
-import {
-  MD3LightTheme,
-  type MD3Theme,
-  type MD3Fonts,
-} from 'react-native-paper';
+import { MD3LightTheme, type MD3Theme } from 'react-native-paper';
 import {
   DefaultTheme as NavigationDefaultTheme,
   type Theme as NavigationTheme,
@@ -27,7 +23,7 @@ export const palette = {
   white: '#ffffff',
 } as const;
 
-const paperFonts: MD3Fonts = {
+const paperFonts = {
   ...MD3LightTheme.fonts,
   displayLarge: { ...MD3LightTheme.fonts.displayLarge, fontFamily: accentFont },
   displayMedium: { ...MD3LightTheme.fonts.displayMedium, fontFamily: accentFont },
@@ -44,7 +40,7 @@ const paperFonts: MD3Fonts = {
   bodyLarge: { ...MD3LightTheme.fonts.bodyLarge, fontFamily: primaryFont },
   bodyMedium: { ...MD3LightTheme.fonts.bodyMedium, fontFamily: primaryFont },
   bodySmall: { ...MD3LightTheme.fonts.bodySmall, fontFamily: primaryFont },
-};
+} satisfies typeof MD3LightTheme.fonts;
 
 export const theme = {
   colors: {

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { Text, Button, HelperText } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
-import { useAppDispatch } from '../store';
-import { addBowelEntry } from '../store/bowelSlice';
+import { useAppDispatch, useAppSelector } from '../store';
+import { addBowelEntryAsync } from '../store/bowelSlice';
 import { useNavigation } from '@react-navigation/native';
 import { BowelEntry, Urgency } from '../types/bowel';
 import { theme } from '../styles';
@@ -15,11 +15,12 @@ export default function BowelScreen() {
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
   const [mucusPresent, setMucusPresent] = useState(false);
   const [bloodPresent, setBloodPresent] = useState(false);
-  
+  const [error, setError] = useState<string | null>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const status = useAppSelector((state) => state.bowel.status);
 
-  const handleAddEntry = () => {
+  const handleAddEntry = async () => {
     const newEntry: BowelEntry = {
       id: Date.now().toString(),
       urgency,
@@ -28,20 +29,24 @@ export default function BowelScreen() {
       bloodPresent,
       timestamp: selectedTime.getTime(),
     };
-    dispatch(addBowelEntry(newEntry));
-    
-    // Reset form
-    setUrgency('Low');
-    setConsistency(4);
-    setSelectedTime(new Date());
-    setMucusPresent(false);
-    setBloodPresent(false);
-    
-    // Reset navigation to Daily Log tab (no overlay)
-    (navigation as any).reset({
-      index: 0,
-      routes: [{ name: 'Main', params: { screen: 'DailyLog' } }],
-    });
+    try {
+      await dispatch(addBowelEntryAsync({ entry: newEntry })).unwrap();
+      setError(null);
+      // Reset form
+      setUrgency('Low');
+      setConsistency(4);
+      setSelectedTime(new Date());
+      setMucusPresent(false);
+      setBloodPresent(false);
+
+      // Reset navigation to Daily Log tab (no overlay)
+      (navigation as any).reset({
+        index: 0,
+        routes: [{ name: 'Main', params: { screen: 'DailyLog' } }],
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to save entry');
+    }
   };
 
   const getUrgencyValue = (urgency: Urgency): number => {
@@ -124,7 +129,19 @@ export default function BowelScreen() {
         </Button>
       </View>
 
-      <Button mode="contained" onPress={handleAddEntry} style={styles.button}>
+      {error && (
+        <HelperText type="error" visible>
+          {error}
+        </HelperText>
+      )}
+
+      <Button
+        mode="contained"
+        onPress={handleAddEntry}
+        style={styles.button}
+        loading={status === 'loading'}
+        disabled={status === 'loading'}
+      >
         Add Entry
       </Button>
     </ScrollView>

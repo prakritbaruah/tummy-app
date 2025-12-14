@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, Card, List, Checkbox } from 'react-native-paper';
+import { Text, Button, Card, List, Checkbox, HelperText } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
-import { useAppDispatch } from '../store';
-import { addSymptomEntry } from '../store/symptomsSlice';
+import { useAppDispatch, useAppSelector } from '../store';
+import { addSymptomEntryAsync } from '../store/symptomsSlice';
 import { useNavigation } from '@react-navigation/native';
 import { 
   SYMPTOMS, 
@@ -19,9 +19,11 @@ export default function SymptomsScreen() {
   const [symptomInputs, setSymptomInputs] = useState<SymptomData[]>([]);
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
   const [symptomListExpanded, setSymptomListExpanded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const status = useAppSelector((state) => state.symptoms.status);
 
   const handleSymptomToggle = (symptom: string) => {
     setSelectedSymptoms(prev => {
@@ -55,26 +57,31 @@ export default function SymptomsScreen() {
   };
 
   const handleAddAllSymptoms = () => {
-    symptomInputs.forEach(input => {
-      const newEntry: SymptomEntry = {
-        ...input,
-        id: Date.now().toString() + input.name,
-        timestamp: selectedTime.getTime(),
-      };
-      dispatch(addSymptomEntry(newEntry));
-    });
-    
-    // Clear all selections
-    setSelectedSymptoms([]);
-    setSymptomInputs([]);
-    setSelectedTime(new Date());
-    
-    // Reset navigation to Daily Log tab (no overlay)
-    // TODO: is this the best way to do this?
-    (navigation as any).reset({
-      index: 0,
-      routes: [{ name: 'Main', params: { screen: 'DailyLog' } }],
-    });
+    Promise.all(
+      symptomInputs.map((input) => {
+        const newEntry: SymptomEntry = {
+          ...input,
+          id: Date.now().toString() + input.name,
+          timestamp: selectedTime.getTime(),
+        };
+        return dispatch(addSymptomEntryAsync({ entry: newEntry })).unwrap();
+      }),
+    )
+      .then(() => {
+        setError(null);
+        setSelectedSymptoms([]);
+        setSymptomInputs([]);
+        setSelectedTime(new Date());
+
+        // Reset navigation to Daily Log tab (no overlay)
+        (navigation as any).reset({
+          index: 0,
+          routes: [{ name: 'Main', params: { screen: 'DailyLog' } }],
+        });
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Unable to save symptoms');
+      });
   };
 
   const getSeverityValue = (severity: Severity): number => {
@@ -162,9 +169,17 @@ export default function SymptomsScreen() {
           mode="contained" 
           onPress={handleAddAllSymptoms}
           style={styles.addAllButton}
+          loading={status === 'loading'}
+          disabled={status === 'loading'}
         >
           Add Symptoms
         </Button>
+      )}
+
+      {error && (
+        <HelperText type="error" visible>
+          {error}
+        </HelperText>
       )}
     </ScrollView>
   );

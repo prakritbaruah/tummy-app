@@ -11,4 +11,6 @@ export interface BowelEntry extends BaseEntry {
 
 export interface BowelState {
   entries: BowelEntry[];
-} 
+  status: 'idle' | 'loading' | 'error';
+  error?: string | null;
+}

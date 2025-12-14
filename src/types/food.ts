@@ -8,4 +8,6 @@ export interface FoodEntry extends BaseEntry {
 
 export interface FoodState {
   entries: FoodEntry[];
+  status: 'idle' | 'loading' | 'error';
+  error?: string | null;
 } 

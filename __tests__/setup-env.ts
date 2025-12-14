@@ -1,0 +1,4 @@
+process.env.SUPABASE_TEST_USER_ID =
+  process.env.SUPABASE_TEST_USER_ID ?? '00000000-0000-0000-0000-000000000000';
+
+export {};

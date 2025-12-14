@@ -1,11 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, Divider, SegmentedButtons } from 'react-native-paper';
-import { useAppSelector } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 import { FoodEntry } from '../types/food';
 import { SymptomEntry } from '../types/symptoms';
 import { BowelEntry } from '../types/bowel';
-import { theme, commonStyles } from '../styles';
+import { theme } from '../styles';
+import { fetchFoodEntries } from '../store/foodSlice';
+import { fetchSymptomEntries } from '../store/symptomsSlice';
+import { fetchBowelEntries } from '../store/bowelSlice';
 
 interface DayEntry {
   date: string;
@@ -20,9 +23,16 @@ type ViewMode = 'all' | 'today' | 'week';
 export default function DailyLogScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>('today');
   
+  const dispatch = useAppDispatch();
   const foodEntries = useAppSelector((state) => state.food.entries);
   const symptomEntries = useAppSelector((state) => state.symptoms.entries);
   const bowelEntries = useAppSelector((state) => state.bowel.entries);
+
+  useEffect(() => {
+    dispatch(fetchFoodEntries());
+    dispatch(fetchSymptomEntries());
+    dispatch(fetchBowelEntries());
+  }, [dispatch]);
 
   const organizedEntries = useMemo(() => {
     // Combine all entries with their types

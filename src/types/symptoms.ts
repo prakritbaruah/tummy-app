@@ -26,4 +26,6 @@ export interface SymptomEntry extends BaseEntry, SymptomData {}
 // State type
 export interface SymptomsState {
   entries: SymptomEntry[];
+  status: 'idle' | 'loading' | 'error';
+  error?: string | null;
 } 

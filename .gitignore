@@ -38,3 +38,7 @@ yarn-error.*
 
 # iOS
 ios/
+
+# environment variables
+.env
+.env.*
