@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, Animated, Dimensions, TouchableWithoutFeedback, PanResponder } from 'react-native';
 import { Button, Text, Card } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -9,52 +9,68 @@ const { height: screenHeight } = Dimensions.get('window');
 const addScreenHeightRatio: number = 0.37;
 
 export default function AddScreen() {
-  const [slideAnim] = useState(new Animated.Value(screenHeight));
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
   const navigation = useNavigation();
 
   // Pan responder for swipe down to dismiss
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (evt, gestureState) => {
-      // Only respond to vertical swipes down
-      return Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && gestureState.dy > 0;
-    },
-    onPanResponderMove: (evt, gestureState) => {
-      // Update animation value based on gesture
-      if (gestureState.dy > 0) {
-        slideAnim.setValue(screenHeight * (1 - addScreenHeightRatio) + gestureState.dy);
-      }
-    },
-    onPanResponderRelease: (evt, gestureState) => {
-      // If swiped down enough, close the modal
-      if (gestureState.dy > 100 || gestureState.vy > 0.5) {
-        handleClose();
-      } else {
-        // Snap back to original position
-        Animated.timing(slideAnim, {
-          toValue: screenHeight * (1 - addScreenHeightRatio),
-          duration: 100,
-          useNativeDriver: false,
-        }).start();
-      }
-    },
-  });
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Only respond to vertical swipes down
+        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && gestureState.dy > 0;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        // Update animation value based on gesture
+        if (gestureState.dy > 0) {
+          slideAnim.setValue(screenHeight * (1 - addScreenHeightRatio) + gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        // If swiped down enough, close the modal
+        if (gestureState.dy > 100 || gestureState.vy > 0.5) {
+          handleClose();
+        } else {
+          // Snap back to original position
+          Animated.timing(slideAnim, {
+            toValue: screenHeight * (1 - addScreenHeightRatio),
+            duration: 100,
+            useNativeDriver: false,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
+    let animation: Animated.CompositeAnimation | null = null;
+    
     // Slide up animation when component mounts
-    Animated.timing(slideAnim, {
+    animation = Animated.timing(slideAnim, {
       toValue: screenHeight * (1 - addScreenHeightRatio),
       duration: 100,
       useNativeDriver: false,
-    }).start();
-  }, []);
+    });
+    animation.start();
+
+    // Cleanup: stop animation when component unmounts
+    return () => {
+      if (animation) {
+        animation.stop();
+      }
+      // Remove all listeners from the animated value to prevent warnings
+      slideAnim.removeAllListeners();
+    };
+  }, [slideAnim]);
 
   const handleClose = () => {
     // Slide down animation before navigating back
-    Animated.timing(slideAnim, {
+    const animation = Animated.timing(slideAnim, {
       toValue: screenHeight,
       duration: 100,
       useNativeDriver: false,
-    }).start(() => {
+    });
+    animation.start(() => {
+      // Only navigate if animation completed successfully
       navigation.goBack();
     });
   };
