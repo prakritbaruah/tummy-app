@@ -64,7 +64,7 @@ export default function SymptomsScreen() {
           id: Date.now().toString() + input.name,
           timestamp: selectedTime.getTime(),
         };
-        return dispatch(addSymptomEntryAsync({ entry: newEntry })).unwrap();
+        return dispatch(addSymptomEntryAsync(newEntry)).unwrap();
       }),
     )
       .then(() => {

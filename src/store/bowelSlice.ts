@@ -10,9 +10,9 @@ const initialState: BowelState = {
 
 export const fetchBowelEntries = createAsyncThunk(
   'bowel/fetchAll',
-  async (userId: string | undefined, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      return await listBowelEntries(userId);
+      return await listBowelEntries();
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to load bowel entries');
     }
@@ -21,9 +21,9 @@ export const fetchBowelEntries = createAsyncThunk(
 
 export const addBowelEntryAsync = createAsyncThunk(
   'bowel/add',
-  async (params: { entry: BowelEntry; userId?: string }, { rejectWithValue }) => {
+  async (entry: BowelEntry, { rejectWithValue }) => {
     try {
-      return await createBowelEntry(params.entry, params.userId);
+      return await createBowelEntry(entry);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to save bowel entry');
     }

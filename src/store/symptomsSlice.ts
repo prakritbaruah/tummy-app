@@ -10,9 +10,9 @@ const initialState: SymptomsState = {
 
 export const fetchSymptomEntries = createAsyncThunk(
   'symptoms/fetchAll',
-  async (userId: string | undefined, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      return await listSymptomEntries(userId);
+      return await listSymptomEntries();
     } catch (error) {
       return rejectWithValue(
         error instanceof Error ? error.message : 'Failed to load symptom entries',
@@ -23,9 +23,9 @@ export const fetchSymptomEntries = createAsyncThunk(
 
 export const addSymptomEntryAsync = createAsyncThunk(
   'symptoms/add',
-  async (params: { entry: SymptomEntry; userId?: string }, { rejectWithValue }) => {
+  async (entry: SymptomEntry, { rejectWithValue }) => {
     try {
-      return await createSymptomEntry(params.entry, params.userId);
+      return await createSymptomEntry(entry);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to save symptom');
     }

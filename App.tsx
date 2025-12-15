@@ -14,6 +14,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { store } from './src/store';
 import { paperTheme, navigationTheme } from './src/styles';
+import { AuthProvider, useAuth } from './src/contexts';
 
 // Import screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -22,6 +23,10 @@ import SymptomsScreen from './src/screens/SymptomsScreen';
 import BowelScreen from './src/screens/BowelScreen';
 import DailyLogScreen from './src/screens/DailyLogScreen';
 import AddScreen from './src/screens/AddScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
+import EmailConfirmationScreen from './src/screens/EmailConfirmationScreen';
+import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -31,6 +36,8 @@ function AddTabPlaceholder() {
 }
 
 function TabNavigator() {
+  const { signOut } = useAuth();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -54,6 +61,13 @@ function TabNavigator() {
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <IconButton icon="home-outline" size={size} iconColor={color} />
+          ),
+          headerRight: () => (
+            <IconButton
+              icon="logout"
+              iconColor={paperTheme.colors.onSurface}
+              onPress={signOut}
+            />
           ),
         }}
       />
@@ -87,6 +101,65 @@ function TabNavigator() {
   );
 }
 
+function AuthNavigator() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
+
+  if (!user) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} />
+        <Stack.Screen 
+          name="EmailConfirmation" 
+          component={EmailConfirmationScreen}
+          options={{ 
+            headerShown: true,
+            title: 'Confirm Email',
+          }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="Main" 
+        component={TabNavigator}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="AddModal" 
+        component={AddScreen}
+        options={{ 
+          presentation: 'transparentModal',
+          headerShown: false,
+          animation: 'slide_from_bottom'
+        }}
+      />
+      <Stack.Screen 
+        name="FoodLog" 
+        component={FoodLogScreen}
+        options={{ title: 'Add Meal' }}
+      />
+      <Stack.Screen 
+        name="Symptoms" 
+        component={SymptomsScreen}
+        options={{ title: 'Add Symptoms' }}
+      />
+      <Stack.Screen 
+        name="Bowel" 
+        component={BowelScreen}
+        options={{ title: 'Add Bowel Movement' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     NunitoRegular: Nunito_400Regular,
@@ -112,43 +185,15 @@ export default function App() {
 
   return (
     <StoreProvider store={store}>
-      <SafeAreaProvider>
-        <PaperProvider theme={paperTheme}>
-          <NavigationContainer theme={navigationTheme}>
-            <Stack.Navigator>
-              <Stack.Screen 
-                name="Main" 
-                component={TabNavigator}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen 
-                name="AddModal" 
-                component={AddScreen}
-                options={{ 
-                  presentation: 'transparentModal',
-                  headerShown: false,
-                  animation: 'slide_from_bottom'
-                }}
-              />
-              <Stack.Screen 
-                name="FoodLog" 
-                component={FoodLogScreen}
-                options={{ title: 'Add Meal' }}
-              />
-              <Stack.Screen 
-                name="Symptoms" 
-                component={SymptomsScreen}
-                options={{ title: 'Add Symptoms' }}
-              />
-              <Stack.Screen 
-                name="Bowel" 
-                component={BowelScreen}
-                options={{ title: 'Add Bowel Movement' }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </PaperProvider>
-      </SafeAreaProvider>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <PaperProvider theme={paperTheme}>
+            <NavigationContainer theme={navigationTheme}>
+              <AuthNavigator />
+            </NavigationContainer>
+          </PaperProvider>
+        </SafeAreaProvider>
+      </AuthProvider>
     </StoreProvider>
   );
 }

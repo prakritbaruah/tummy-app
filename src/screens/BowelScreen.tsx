@@ -30,7 +30,7 @@ export default function BowelScreen() {
       timestamp: selectedTime.getTime(),
     };
     try {
-      await dispatch(addBowelEntryAsync({ entry: newEntry })).unwrap();
+      await dispatch(addBowelEntryAsync(newEntry)).unwrap();
       setError(null);
       // Reset form
       setUrgency('Low');

@@ -10,9 +10,9 @@ const initialState: FoodState = {
 
 export const fetchFoodEntries = createAsyncThunk(
   'food/fetchAll',
-  async (userId: string | undefined, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      return await listFoodEntries(userId);
+      return await listFoodEntries();
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to load food entries');
     }
@@ -21,9 +21,9 @@ export const fetchFoodEntries = createAsyncThunk(
 
 export const addFoodEntryAsync = createAsyncThunk(
   'food/add',
-  async (params: { entry: FoodEntry; userId?: string }, { rejectWithValue }) => {
+  async (entry: FoodEntry, { rejectWithValue }) => {
     try {
-      return await createFoodEntry(params.entry, params.userId);
+      return await createFoodEntry(entry);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to save food entry');
     }

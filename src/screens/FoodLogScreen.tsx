@@ -47,7 +47,7 @@ export default function FoodLogScreen() {
         quantity: '1 serving',
         timestamp: Date.now(),
       };
-      dispatch(addFoodEntryAsync({ entry: newEntry }))
+      dispatch(addFoodEntryAsync(newEntry))
         .unwrap()
         .then(() => {
           setError(null);

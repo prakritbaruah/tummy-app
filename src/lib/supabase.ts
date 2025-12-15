@@ -1,13 +1,15 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { env } from './env';
 
-// TODO: fix with auth
-// Singleton Supabase client for the app. Auth will be wired later; for now we keep
-// session persistence off and rely on explicit user ids passed to repo methods.
+// Singleton Supabase client for the app with authentication enabled.
+// Sessions are persisted securely using AsyncStorage and automatically refreshed.
 export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
   auth: {
-    persistSession: false,
-    autoRefreshToken: false,
+    storage: AsyncStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false, // Not needed for React Native
   },
 });

@@ -12,7 +12,6 @@ export const env = {
     process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     'EXPO_PUBLIC_SUPABASE_ANON_KEY',
   ),
-  // Dev-only user used until auth is wired; replace once auth provides a real user id.
-  supabaseDevUserId:
-    process.env.EXPO_PUBLIC_SUPABASE_DEV_USER_ID ?? '00000000-0000-0000-0000-000000000000',
+  // Note: supabaseDevUserId has been removed. All data access now requires authentication.
+  // The authenticated user ID is automatically obtained from the Supabase session.
 };
