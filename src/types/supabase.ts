@@ -1,4 +1,3 @@
-// TODO: add auth, 
 // TODO: add updated_at and deleted_at columns
 
 export interface BowelEntryRow {

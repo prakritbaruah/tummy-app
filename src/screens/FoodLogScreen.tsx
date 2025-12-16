@@ -34,7 +34,6 @@ export default function FoodLogScreen() {
   };
 
   const handleBarcodePress = () => {
-    // TODO: Implement barcode scanning functionality
     console.log('Barcode pressed');
     setShowTextInput(false);
   };

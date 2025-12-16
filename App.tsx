@@ -27,6 +27,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
 import EmailConfirmationScreen from './src/screens/EmailConfirmationScreen';
 import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -36,11 +37,9 @@ function AddTabPlaceholder() {
 }
 
 function TabNavigator() {
-  const { signOut } = useAuth();
-
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         tabBarActiveTintColor: paperTheme.colors.primary,
         tabBarInactiveTintColor: paperTheme.colors.onSurfaceVariant,
         tabBarStyle: { backgroundColor: paperTheme.colors.surface },
@@ -52,7 +51,22 @@ function TabNavigator() {
           fontFamily: paperTheme.fonts.titleMedium.fontFamily,
           color: paperTheme.colors.onSurface,
         },
-      }}
+        headerLeft: () => (
+          <IconButton
+            icon="account-circle-outline"
+            iconColor={paperTheme.colors.onSurface}
+            onPress={() => {
+              const parentNav = navigation.getParent();
+              if (parentNav) {
+                parentNav.navigate('Profile');
+              } else {
+                navigation.navigate('Profile');
+              }
+            }}
+            accessibilityLabel="Open profile"
+          />
+        ),
+      })}
     >
       <Tab.Screen 
         name="Home" 
@@ -61,13 +75,6 @@ function TabNavigator() {
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <IconButton icon="home-outline" size={size} iconColor={color} />
-          ),
-          headerRight: () => (
-            <IconButton
-              icon="logout"
-              iconColor={paperTheme.colors.onSurface}
-              onPress={signOut}
-            />
           ),
         }}
       />
@@ -155,6 +162,15 @@ function AuthNavigator() {
         name="Bowel" 
         component={BowelScreen}
         options={{ title: 'Add Bowel Movement' }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+          animation: 'slide_from_bottom',
+        }}
       />
     </Stack.Navigator>
   );
