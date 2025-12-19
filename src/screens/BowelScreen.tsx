@@ -27,7 +27,7 @@ export default function BowelScreen() {
       consistency,
       mucusPresent,
       bloodPresent,
-      timestamp: selectedTime.getTime(),
+      occurredAt: selectedTime.getTime(),
     };
     try {
       await dispatch(addBowelEntryAsync(newEntry)).unwrap();

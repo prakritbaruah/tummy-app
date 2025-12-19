@@ -19,6 +19,10 @@ export default defineConfig({
         __dirname,
         '__tests__/mocks/react-native-url-polyfill-auto.ts',
       ),
+      '@react-native-async-storage/async-storage': path.resolve(
+        __dirname,
+        '__tests__/mocks/async-storage.ts',
+      ),
     },
   },
 });

@@ -2,18 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, Divider, SegmentedButtons } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '../store';
-import { FoodEntry } from '../types/food';
 import { SymptomEntry } from '../types/symptoms';
 import { BowelEntry } from '../types/bowel';
 import { theme } from '../styles';
-import { fetchFoodEntries } from '../store/foodSlice';
 import { fetchSymptomEntries } from '../store/symptomsSlice';
 import { fetchBowelEntries } from '../store/bowelSlice';
 
 interface DayEntry {
   date: string;
   dateObj: Date;
-  foodEntries: FoodEntry[];
   symptomEntries: SymptomEntry[];
   bowelEntries: BowelEntry[];
 }
@@ -24,12 +21,10 @@ export default function DailyLogScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>('today');
   
   const dispatch = useAppDispatch();
-  const foodEntries = useAppSelector((state) => state.food.entries);
   const symptomEntries = useAppSelector((state) => state.symptoms.entries);
   const bowelEntries = useAppSelector((state) => state.bowel.entries);
 
   useEffect(() => {
-    dispatch(fetchFoodEntries());
     dispatch(fetchSymptomEntries());
     dispatch(fetchBowelEntries());
   }, [dispatch]);
@@ -37,7 +32,6 @@ export default function DailyLogScreen() {
   const organizedEntries = useMemo(() => {
     // Combine all entries with their types
     const allEntries = [
-      ...foodEntries.map((entry: FoodEntry) => ({ ...entry, type: 'food' as const })),
       ...symptomEntries.map((entry: SymptomEntry) => ({ ...entry, type: 'symptom' as const })),
       ...bowelEntries.map((entry: BowelEntry) => ({ ...entry, type: 'bowel' as const }))
     ];
@@ -46,14 +40,13 @@ export default function DailyLogScreen() {
     const entriesByDate = new Map<string, DayEntry>();
 
     allEntries.forEach(entry => {
-      const date = new Date(entry.timestamp);
+      const date = new Date(entry.occurredAt);
       const dateKey = date.toDateString();
       
       if (!entriesByDate.has(dateKey)) {
         entriesByDate.set(dateKey, {
           date: dateKey,
           dateObj: date,
-          foodEntries: [],
           symptomEntries: [],
           bowelEntries: []
         });
@@ -61,9 +54,7 @@ export default function DailyLogScreen() {
 
       const dayEntry = entriesByDate.get(dateKey)!;
       
-      if (entry.type === 'food') {
-        dayEntry.foodEntries.push(entry as FoodEntry);
-      } else if (entry.type === 'symptom') {
+      if (entry.type === 'symptom') {
         dayEntry.symptomEntries.push(entry as SymptomEntry);
       } else if (entry.type === 'bowel') {
         dayEntry.bowelEntries.push(entry as BowelEntry);
@@ -92,7 +83,7 @@ export default function DailyLogScreen() {
       default:
         return sortedEntries;
     }
-  }, [foodEntries, symptomEntries, bowelEntries, viewMode]);
+  }, [symptomEntries, bowelEntries, viewMode]);
 
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleTimeString([], { 
@@ -118,8 +109,6 @@ export default function DailyLogScreen() {
       });
     }
   };
-
-
 
   return (
     <View style={styles.container}>
@@ -158,23 +147,16 @@ export default function DailyLogScreen() {
                 {/* Show all entries chronologically (newest first) */}
                 {(() => {
                   const allDayEntries = [
-                    ...dayEntry.foodEntries.map(entry => ({ ...entry, type: 'food' as const })),
                     ...dayEntry.symptomEntries.map(entry => ({ ...entry, type: 'symptom' as const })),
                     ...dayEntry.bowelEntries.map(entry => ({ ...entry, type: 'bowel' as const }))
-                  ].sort((a, b) => b.timestamp - a.timestamp);
+                  ].sort((a, b) => b.occurredAt - a.occurredAt);
 
                   return allDayEntries.map((entry) => (
                     <View key={`${entry.type}-${entry.id}`} style={styles.entryItem}>
                       <View style={styles.entryRow}>
                         <Text variant="bodySmall" style={styles.entryTime}>
-                          {formatTime(entry.timestamp)}
-                        </Text>
-                        {entry.type === 'food' && (
-                          <Text variant="bodyMedium" style={styles.entryText}>
-                            {(entry as FoodEntry).name}
-                          </Text>
-                        )}
-                        
+                          {formatTime(entry.occurredAt)}
+                        </Text>                        
                         {entry.type === 'symptom' && (
                           <Text variant="bodyMedium" style={styles.entryText}>
                             {(entry as SymptomEntry).name}
@@ -195,7 +177,6 @@ export default function DailyLogScreen() {
                 <Divider style={styles.divider} />
                 <View style={styles.summaryContainer}>
                   <Text variant="bodySmall" style={styles.summaryText}>
-                    {dayEntry.foodEntries.length} food entries • {' '}
                     {dayEntry.symptomEntries.length} symptoms • {' '}
                     {dayEntry.bowelEntries.length} bowel movements
                   </Text>

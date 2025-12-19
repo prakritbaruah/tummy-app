@@ -1,61 +1,41 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { TextInput, Button, Text, HelperText } from 'react-native-paper';
-import { useAppDispatch, useAppSelector } from '../store';
-import { addFoodEntryAsync } from '../store/foodSlice';
-import { FoodEntry } from '../types/food';
+import { TextInput, Button, Text } from 'react-native-paper';
 import { theme, commonStyles } from '../styles';
 
 export default function FoodLogScreen() {
   const [showTextInput, setShowTextInput] = useState(false);
   const [showMicrophoneText, setShowMicrophoneText] = useState(false);
   const [foodText, setFoodText] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const dispatch = useAppDispatch();
-  const status = useAppSelector((state) => state.food.status);
 
   const handleCameraPress = () => {
-    // TODO: Implement camera functionality
-    console.log('Camera pressed');
+    console.log('Camera button clicked');
     setShowTextInput(false);
     setShowMicrophoneText(false);
   };
 
   const handleMicrophonePress = () => {
-    // TODO: Implement microphone functionality
-    console.log('Microphone pressed');
+    console.log('Microphone button clicked');
     setShowMicrophoneText(true);
     setShowTextInput(false);
   };
 
   const handleWritingPress = () => {
+    console.log('Text/Writing button clicked');
     setShowTextInput(true);
     setShowMicrophoneText(false);
   };
 
   const handleBarcodePress = () => {
-    console.log('Barcode pressed');
+    console.log('Barcode button clicked');
     setShowTextInput(false);
   };
 
   const handleSubmit = () => {
+    console.log('Submit button clicked with text:', foodText);
     if (foodText.trim()) {
-      const newEntry: FoodEntry = {
-        id: Date.now().toString(),
-        name: foodText.trim(),
-        quantity: '1 serving',
-        timestamp: Date.now(),
-      };
-      dispatch(addFoodEntryAsync(newEntry))
-        .unwrap()
-        .then(() => {
-          setError(null);
-          setFoodText('');
-          setShowTextInput(false);
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err.message : 'Unable to save food entry');
-        });
+      setFoodText('');
+      setShowTextInput(false);
     }
   };
 
@@ -112,16 +92,9 @@ export default function FoodLogScreen() {
             mode="contained" 
             onPress={handleSubmit} 
             style={styles.submitButton}
-            loading={status === 'loading'}
-            disabled={status === 'loading'}
           >
             Submit
           </Button>
-          {error && (
-            <HelperText type="error" visible>
-              {error}
-            </HelperText>
-          )}
         </View>
       )}
     </View>

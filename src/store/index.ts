@@ -1,12 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
-import foodReducer from './foodSlice';
 import symptomsReducer from './symptomsSlice';
 import bowelReducer from './bowelSlice';
 
 export const store = configureStore({
   reducer: {
-    food: foodReducer,
     symptoms: symptomsReducer,
     bowel: bowelReducer,
   },

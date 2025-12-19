@@ -62,7 +62,7 @@ export default function SymptomsScreen() {
         const newEntry: SymptomEntry = {
           ...input,
           id: Date.now().toString() + input.name,
-          timestamp: selectedTime.getTime(),
+          occurredAt: selectedTime.getTime(),
         };
         return dispatch(addSymptomEntryAsync(newEntry)).unwrap();
       }),

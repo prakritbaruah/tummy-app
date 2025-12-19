@@ -2,33 +2,15 @@ import { supabase } from '../lib/supabase';
 import { BowelEntry } from '../types/bowel';
 import { BowelEntryRow } from '../types/supabase';
 import { fromBowelRow, toBowelRow } from './mappers';
+import { getAuthenticatedUserId, handleError } from './utils';
 
 const TABLE = 'bowel_entries';
-
-const handleError = (error: unknown) => {
-  if (error instanceof Error) throw error;
-  throw new Error('Unexpected Supabase error');
-};
-
-/**
- * Gets the authenticated user ID from the current Supabase session.
- * Throws an error if no user is authenticated.
- */
-const getAuthenticatedUserId = async (): Promise<string> => {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
-  if (error || !user) {
-    throw new Error('User must be authenticated to access bowel entries');
-  }
-  
-  return user.id;
-};
 
 /**
  * Lists all bowel entries for the authenticated user.
  * Automatically scoped by RLS policies to the current user.
  */
-export const listBowelEntries = async (): Promise<BowelEntry[]> => {
+export async function listBowelEntries(): Promise<BowelEntry[]> {
   // Verify user is authenticated (RLS will enforce, but we check for better error messages)
   await getAuthenticatedUserId();
 
@@ -46,13 +28,13 @@ export const listBowelEntries = async (): Promise<BowelEntry[]> => {
   }
 
   return (data).map(fromBowelRow);
-};
+}
 
 /**
  * Creates a new bowel entry for the authenticated user.
  * The user_id is automatically set from the authenticated session.
  */
-export const createBowelEntry = async (entry: BowelEntry): Promise<BowelEntry> => {
+export async function createBowelEntry(entry: BowelEntry): Promise<BowelEntry> {
   const userId = await getAuthenticatedUserId();
   const row = toBowelRow(entry, userId);
   
@@ -71,4 +53,4 @@ export const createBowelEntry = async (entry: BowelEntry): Promise<BowelEntry> =
   }
 
   return fromBowelRow(data as BowelEntryRow);
-};
+}
