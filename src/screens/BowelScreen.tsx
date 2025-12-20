@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, HelperText } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
-import { useAppDispatch, useAppSelector } from '../store';
-import { addBowelEntryAsync } from '../store/bowelSlice';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { addBowelEntryAsync } from '@/store/bowelSlice';
 import { useNavigation } from '@react-navigation/native';
-import { BowelEntry, Urgency } from '../types/bowel';
-import { theme } from '../styles';
-import { TimePickerCard } from '../components';
+import { BowelEntry, Urgency } from '@/types/bowel';
+import { theme } from '@/styles';
+import { TimePickerCard } from '@/components';
 
 export default function BowelScreen() {
   const [urgency, setUrgency] = useState<Urgency>('Low');

@@ -7,13 +7,13 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { confirmFoodEntry, createFoodEntry } from '../../../src/data/foodEntryService';
-import * as dishHelpers from '../../../src/data/dishHelpers';
-import * as foodEntryRepo from '../../../src/data/foodEntryRepo';
-import * as llmStubs from '../../../src/data/llmStubs';
-import * as utils from '../../../src/data/utils';
-import { supabase } from '../../../src/lib/supabase';
-import { DishRow, DishEventRow } from '../../../src/types/supabase';
+import { confirmFoodEntry, createFoodEntry } from '@/data/foodEntryService';
+import * as dishHelpers from '@/data/dishHelpers';
+import * as foodEntryRepo from '@/data/foodEntryRepo';
+import * as llmStubs from '@/data/llmStubs';
+import * as utils from '@/data/utils';
+import { supabase } from '@/lib/supabase';
+import { DishRow, DishEventRow } from '@/types/supabase';
 
 // Store original Supabase methods to restore after each test
 const originalFrom = supabase.from;

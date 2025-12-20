@@ -14,6 +14,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@': path.resolve(__dirname, 'src'),
       'react-native': path.resolve(__dirname, '__tests__/mocks/react-native.ts'),
       'react-native-url-polyfill/auto': path.resolve(
         __dirname,

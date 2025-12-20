@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
-import { useAuth } from '../contexts';
+import { useAuth } from '@/contexts';
 import { useNavigation } from '@react-navigation/native';
-import { theme } from '../styles';
+import { theme } from '@/styles';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');

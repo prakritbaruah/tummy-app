@@ -1,6 +1,6 @@
 // Domain types for dish and trigger system
 
-import { Timestamp } from './common';
+import { Timestamp } from '@/types/common';
 
 export interface RawFoodEntry {
   id: string;

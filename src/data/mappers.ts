@@ -1,5 +1,5 @@
-import { BowelEntry, Urgency } from '../types/bowel';
-import { Severity, SymptomEntry } from '../types/symptoms';
+import { BowelEntry, Urgency } from '@/types/bowel';
+import { Severity, SymptomEntry } from '@/types/symptoms';
 import {
   Dish,
   DishEvent,
@@ -8,7 +8,7 @@ import {
   PredictedDishTrigger,
   RawFoodEntry,
   Trigger,
-} from '../types/dish';
+} from '@/types/dish';
 import {
   BowelEntryRow,
   DishEventRow,
@@ -19,7 +19,7 @@ import {
   RawFoodEntryRow,
   SymptomEntryRow,
   TriggerRow,
-} from '../types/supabase';
+} from '@/types/supabase';
 
 function toISOString(timestamp: number): string {
   return new Date(timestamp).toISOString();

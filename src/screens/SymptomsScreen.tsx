@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, Card, List, Checkbox, HelperText } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
-import { useAppDispatch, useAppSelector } from '../store';
-import { addSymptomEntryAsync } from '../store/symptomsSlice';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { addSymptomEntryAsync } from '@/store/symptomsSlice';
 import { useNavigation } from '@react-navigation/native';
 import { 
   SYMPTOMS, 
   Severity, 
   SymptomData,
   SymptomEntry 
-} from '../types/symptoms';
-import { theme } from '../styles';
-import { TimePickerCard } from '../components';
+} from '@/types/symptoms';
+import { theme } from '@/styles';
+import { TimePickerCard } from '@/components';
 
 export default function SymptomsScreen() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);

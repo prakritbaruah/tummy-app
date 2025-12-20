@@ -12,22 +12,22 @@ import {
   LeagueSpartan_700Bold,
 } from '@expo-google-fonts/league-spartan';
 import * as SplashScreen from 'expo-splash-screen';
-import { store } from './src/store';
-import { paperTheme, navigationTheme } from './src/styles';
-import { AuthProvider, useAuth } from './src/contexts';
+import { store } from '@/store';
+import { paperTheme, navigationTheme } from '@/styles';
+import { AuthProvider, useAuth } from '@/contexts';
 
 // Import screens
-import HomeScreen from './src/screens/HomeScreen';
-import FoodLogScreen from './src/screens/FoodLogScreen';
-import SymptomsScreen from './src/screens/SymptomsScreen';
-import BowelScreen from './src/screens/BowelScreen';
-import DailyLogScreen from './src/screens/DailyLogScreen';
-import AddScreen from './src/screens/AddScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import SignUpScreen from './src/screens/SignUpScreen';
-import EmailConfirmationScreen from './src/screens/EmailConfirmationScreen';
-import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
+import HomeScreen from '@/screens/HomeScreen';
+import FoodLogScreen from '@/screens/FoodLogScreen';
+import SymptomsScreen from '@/screens/SymptomsScreen';
+import BowelScreen from '@/screens/BowelScreen';
+import DailyLogScreen from '@/screens/DailyLogScreen';
+import AddScreen from '@/screens/AddScreen';
+import LoginScreen from '@/screens/LoginScreen';
+import SignUpScreen from '@/screens/SignUpScreen';
+import EmailConfirmationScreen from '@/screens/EmailConfirmationScreen';
+import AuthLoadingScreen from '@/screens/AuthLoadingScreen';
+import ProfileScreen from '@/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

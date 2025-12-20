@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { BowelEntry, BowelState } from '../types/bowel';
-import { createBowelEntry, listBowelEntries } from '../data/bowelRepo';
+import { BowelEntry, BowelState } from '@/types/bowel';
+import { createBowelEntry, listBowelEntries } from '@/data/bowelRepo';
 
 const initialState: BowelState = {
   entries: [],

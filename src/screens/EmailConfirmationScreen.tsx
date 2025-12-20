@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, Card } from 'react-native-paper';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { theme } from '../styles';
+import { theme } from '@/styles';
 
 interface EmailConfirmationRouteParams {
   email: string;

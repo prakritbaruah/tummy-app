@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { findOrCreateDishForUser, normalizeDishName } from '../../../src/data/dishHelpers';
-import { supabase } from '../../../src/lib/supabase';
-import { DishRow } from '../../../src/types/supabase';
+import { findOrCreateDishForUser, normalizeDishName } from '@/data/dishHelpers';
+import { supabase } from '@/lib/supabase';
+import { DishRow } from '@/types/supabase';
 
 const originalFrom = supabase.from;
 

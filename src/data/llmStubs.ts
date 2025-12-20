@@ -1,4 +1,4 @@
-import { ExtractedDish } from '../types/foodEntry';
+import { ExtractedDish } from '@/types/foodEntry';
 
 /**
  * Stub function that simulates LLM extraction of dishes from raw entry text.

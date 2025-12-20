@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Card } from 'react-native-paper';
-import { useAppDispatch, useAppSelector } from '../store';
-import { commonStyles } from '../styles';
-import { fetchSymptomEntries } from '../store/symptomsSlice';
-import { fetchBowelEntries } from '../store/bowelSlice';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { commonStyles } from '@/styles';
+import { fetchSymptomEntries } from '@/store/symptomsSlice';
+import { fetchBowelEntries } from '@/store/bowelSlice';
 
 export default function HomeScreen() {
   const dispatch = useAppDispatch();

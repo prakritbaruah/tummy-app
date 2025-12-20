@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
-import { theme, commonStyles } from '../styles';
+import { theme, commonStyles } from '@/styles';
 
 export default function FoodLogScreen() {
   const [showTextInput, setShowTextInput] = useState(false);

@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, Divider, SegmentedButtons } from 'react-native-paper';
-import { useAppDispatch, useAppSelector } from '../store';
-import { SymptomEntry } from '../types/symptoms';
-import { BowelEntry } from '../types/bowel';
-import { theme } from '../styles';
-import { fetchSymptomEntries } from '../store/symptomsSlice';
-import { fetchBowelEntries } from '../store/bowelSlice';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { SymptomEntry } from '@/types/symptoms';
+import { BowelEntry } from '@/types/bowel';
+import { theme } from '@/styles';
+import { fetchSymptomEntries } from '@/store/symptomsSlice';
+import { fetchBowelEntries } from '@/store/bowelSlice';
 
 interface DayEntry {
   date: string;

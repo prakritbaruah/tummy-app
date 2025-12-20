@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createBowelEntry, listBowelEntries } from '../../../src/data/bowelRepo';
-import { supabase } from '../../../src/lib/supabase';
-import { BowelEntry } from '../../../src/types/bowel';
-import { BowelEntryRow } from '../../../src/types/supabase';
+import { createBowelEntry, listBowelEntries } from '@/data/bowelRepo';
+import { supabase } from '@/lib/supabase';
+import { BowelEntry } from '@/types/bowel';
+import { BowelEntryRow } from '@/types/supabase';
 
 const originalFrom = supabase.from;
 const originalAuth = supabase.auth;

@@ -18,9 +18,9 @@ import {
   fromPredictedDishTriggerRow,
   toDishTriggerRow,
   fromDishTriggerRow,
-} from '../../../src/data/mappers';
-import { BowelEntry } from '../../../src/types/bowel';
-import { SymptomEntry } from '../../../src/types/symptoms';
+} from '@/data/mappers';
+import { BowelEntry } from '@/types/bowel';
+import { SymptomEntry } from '@/types/symptoms';
 import {
   Dish,
   DishEvent,
@@ -29,7 +29,7 @@ import {
   PredictedDishTrigger,
   RawFoodEntry,
   Trigger,
-} from '../../../src/types/dish';
+} from '@/types/dish';
 
 describe('mappers', () => {
   it('round-trips bowel entries', () => {

@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, Animated, Dimensions, TouchableWithoutFeedback, PanResponder } from 'react-native';
 import { Button, Text, Card } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { theme } from '../styles';
+import { theme } from '@/styles';
 
 const { height: screenHeight } = Dimensions.get('window');
 

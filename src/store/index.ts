@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
-import symptomsReducer from './symptomsSlice';
-import bowelReducer from './bowelSlice';
+import symptomsReducer from '@/store/symptomsSlice';
+import bowelReducer from '@/store/bowelSlice';
 
 export const store = configureStore({
   reducer: {

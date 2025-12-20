@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, TextInput, Button, IconButton, HelperText, ActivityIndicator } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../contexts';
-import { theme, paperTheme } from '../styles';
+import { useAuth } from '@/contexts';
+import { theme, paperTheme } from '@/styles';
 
 export default function ProfileScreen() {
   const navigation = useNavigation();

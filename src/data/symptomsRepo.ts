@@ -1,8 +1,8 @@
-import { supabase } from '../lib/supabase';
-import { SymptomEntry } from '../types/symptoms';
-import { SymptomEntryRow } from '../types/supabase';
-import { fromSymptomRow, toSymptomRow } from './mappers';
-import { getAuthenticatedUserId, handleError } from './utils';
+import { supabase } from '@/lib/supabase';
+import { SymptomEntry } from '@/types/symptoms';
+import { SymptomEntryRow } from '@/types/supabase';
+import { fromSymptomRow, toSymptomRow } from '@/data/mappers';
+import { getAuthenticatedUserId, handleError } from '@/data/utils';
 
 const TABLE = 'symptom_entries';
 

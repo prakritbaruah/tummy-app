@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text } from 'react-native-paper';
-import { theme } from '../styles';
+import { theme } from '@/styles';
 
 export default function AuthLoadingScreen() {
   return (

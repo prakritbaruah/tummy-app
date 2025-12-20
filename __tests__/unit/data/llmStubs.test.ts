@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { llmExtractDishes, llmPredictTriggers } from '../../../src/data/llmStubs';
+import { llmExtractDishes, llmPredictTriggers } from '@/data/llmStubs';
 
 // TODO: this isn't deterministic, I think we'd need to replace the stubs test with 
 // more deterministic tests, or perhaps check that we retrieve correct items

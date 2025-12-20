@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, Text as RNText, Platform, View } from 'react-native';
 import { Text, Card } from 'react-native-paper';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { theme } from '../styles';
+import { theme } from '@/styles';
 
 interface DateTimePickerCardProps {
   value: Date;

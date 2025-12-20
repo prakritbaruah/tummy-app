@@ -1,1 +1,1 @@
-export { default as TimePickerCard } from './TimePickerCard';
+export { default as TimePickerCard } from '@/components/TimePickerCard';

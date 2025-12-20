@@ -1,8 +1,8 @@
-import { supabase } from '../lib/supabase';
-import { BowelEntry } from '../types/bowel';
-import { BowelEntryRow } from '../types/supabase';
-import { fromBowelRow, toBowelRow } from './mappers';
-import { getAuthenticatedUserId, handleError } from './utils';
+import { supabase } from '@/lib/supabase';
+import { BowelEntry } from '@/types/bowel';
+import { BowelEntryRow } from '@/types/supabase';
+import { fromBowelRow, toBowelRow } from '@/data/mappers';
+import { getAuthenticatedUserId, handleError } from '@/data/utils';
 
 const TABLE = 'bowel_entries';
 

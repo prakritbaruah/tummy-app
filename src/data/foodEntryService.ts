@@ -4,14 +4,14 @@ import {
   CreateFoodEntryRequest,
   CreateFoodEntryResponse,
   DishWithTriggers,
-} from '../types/foodEntry';
+} from '@/types/foodEntry';
 import {
   findOrCreateDishForUser,
   getMostRecentDishTriggers,
   normalizeDishName,
   upsertDishTriggersForEvent,
-} from './dishHelpers';
-import { llmExtractDishes, llmPredictTriggers } from './llmStubs';
+} from '@/data/dishHelpers';
+import { llmExtractDishes, llmPredictTriggers } from '@/data/llmStubs';
 import {
   createDishEvent,
   createPredictedDishTrigger,
@@ -23,9 +23,9 @@ import {
   getTriggerById,
   getTriggersByNames,
   updateDish,
-} from './foodEntryRepo';
-import { supabase } from '../lib/supabase';
-import { getAuthenticatedUserId } from './utils';
+} from '@/data/foodEntryRepo';
+import { supabase } from '@/lib/supabase';
+import { getAuthenticatedUserId } from '@/data/utils';
 
 const MODEL_VERSION = 'v1-stub';
 const PROMPT_VERSION = 'v1-stub';

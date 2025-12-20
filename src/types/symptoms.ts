@@ -1,4 +1,4 @@
-import { BaseEntry } from './common';
+import { BaseEntry } from '@/types/common';
 
 export const SYMPTOMS = [
   'Abdominal Pain',

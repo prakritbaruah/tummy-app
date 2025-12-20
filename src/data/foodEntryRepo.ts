@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import {
   Dish,
   DishEvent,
@@ -7,7 +7,7 @@ import {
   PredictedDishTrigger,
   RawFoodEntry,
   Trigger,
-} from '../types/dish';
+} from '@/types/dish';
 import {
   DishEventRow,
   DishRow,
@@ -16,7 +16,7 @@ import {
   PredictedDishTriggerRow,
   RawFoodEntryRow,
   TriggerRow,
-} from '../types/supabase';
+} from '@/types/supabase';
 import {
   fromDishEventRow,
   fromDishRow,
@@ -31,8 +31,8 @@ import {
   toPredictedDishRow,
   toPredictedDishTriggerRow,
   toRawFoodEntryRow,
-} from './mappers';
-import { handleError } from './utils';
+} from '@/data/mappers';
+import { handleError } from '@/data/utils';
 
 // Raw Food Entry operations
 export async function createRawFoodEntry(

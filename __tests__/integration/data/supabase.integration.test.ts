@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { describe, expect, it, beforeAll } from 'vitest';
-import { createBowelEntry, listBowelEntries } from '../../../src/data/bowelRepo';
-import { supabase } from '../../../src/lib/supabase';
+import { createBowelEntry, listBowelEntries } from '@/data/bowelRepo';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Integration tests for Supabase database operations.

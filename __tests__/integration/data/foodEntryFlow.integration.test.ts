@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { describe, expect, it, beforeAll, afterAll } from 'vitest';
-import { createFoodEntry, confirmFoodEntry } from '../../../src/data/foodEntryService';
-import { supabase } from '../../../src/lib/supabase';
+import { createFoodEntry, confirmFoodEntry } from '@/data/foodEntryService';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Integration tests for food entry flow.

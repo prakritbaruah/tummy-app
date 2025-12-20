@@ -22,8 +22,8 @@ import {
   getTriggerById,
   getTriggersByNames,
   updateDish,
-} from '../../../src/data/foodEntryRepo';
-import { supabase } from '../../../src/lib/supabase';
+} from '@/data/foodEntryRepo';
+import { supabase } from '@/lib/supabase';
 import {
   DishEventRow,
   DishRow,
@@ -32,7 +32,7 @@ import {
   PredictedDishTriggerRow,
   RawFoodEntryRow,
   TriggerRow,
-} from '../../../src/types/supabase';
+} from '@/types/supabase';
 
 // Store original Supabase methods to restore after each test
 const originalFrom = supabase.from;

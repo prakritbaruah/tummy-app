@@ -1,6 +1,6 @@
-import { supabase } from '../lib/supabase';
-import { Dish, Trigger } from '../types/dish';
-import { DishRow, TriggerRow } from '../types/supabase';
+import { supabase } from '@/lib/supabase';
+import { Dish, Trigger } from '@/types/dish';
+import { DishRow, TriggerRow } from '@/types/supabase';
 
 /**
  * Normalizes a dish name for matching purposes.

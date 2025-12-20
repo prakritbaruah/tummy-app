@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { SymptomEntry, SymptomsState } from '../types/symptoms';
-import { createSymptomEntry, listSymptomEntries } from '../data/symptomsRepo';
+import { SymptomEntry, SymptomsState } from '@/types/symptoms';
+import { createSymptomEntry, listSymptomEntries } from '@/data/symptomsRepo';
 
 const initialState: SymptomsState = {
   entries: [],
