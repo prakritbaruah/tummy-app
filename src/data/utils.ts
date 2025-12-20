@@ -5,6 +5,19 @@ import { supabase } from '@/lib/supabase';
  */
 export function handleError(error: unknown) {
   if (error instanceof Error) throw error;
+  
+  // Supabase errors are objects with code and message properties
+  if (error && typeof error === 'object') {
+    const supabaseError = error as { message?: string; code?: string; [key: string]: any };
+    if ('message' in supabaseError && typeof supabaseError.message === 'string') {
+      throw new Error(supabaseError.message);
+    }
+    // If it's an error-like object but no message, try to stringify it
+    if ('code' in supabaseError) {
+      throw new Error(`Supabase error: ${supabaseError.code || 'unknown'}`);
+    }
+  }
+  
   throw new Error('Unexpected Supabase error');
 }
 
