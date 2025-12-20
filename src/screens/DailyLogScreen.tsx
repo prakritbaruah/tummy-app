@@ -7,18 +7,26 @@ import { BowelEntry } from '@/types/bowel';
 import { theme } from '@/styles';
 import { fetchSymptomEntries } from '@/store/symptomsSlice';
 import { fetchBowelEntries } from '@/store/bowelSlice';
+import { getFoodEntriesForUser } from '@/data/foodEntryService';
 
 interface DayEntry {
   date: string;
   dateObj: Date;
   symptomEntries: SymptomEntry[];
   bowelEntries: BowelEntry[];
+  foodEntries: Array<{
+    dishEventId: string;
+    dishName: string;
+    occurredAt: number;
+  }>;
 }
 
 type ViewMode = 'all' | 'today' | 'week';
 
 export default function DailyLogScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>('today');
+  const [foodEntries, setFoodEntries] = useState<Awaited<ReturnType<typeof getFoodEntriesForUser>>>([]);
+  const [isLoadingFood, setIsLoadingFood] = useState(true);
   
   const dispatch = useAppDispatch();
   const symptomEntries = useAppSelector((state) => state.symptoms.entries);
@@ -27,6 +35,20 @@ export default function DailyLogScreen() {
   useEffect(() => {
     dispatch(fetchSymptomEntries());
     dispatch(fetchBowelEntries());
+    
+    // Fetch food entries
+    const loadFoodEntries = async () => {
+      try {
+        setIsLoadingFood(true);
+        const entries = await getFoodEntriesForUser();
+        setFoodEntries(entries);
+      } catch (error) {
+        console.error('Error loading food entries:', error);
+      } finally {
+        setIsLoadingFood(false);
+      }
+    };
+    loadFoodEntries();
   }, [dispatch]);
 
   const organizedEntries = useMemo(() => {
@@ -48,7 +70,8 @@ export default function DailyLogScreen() {
           date: dateKey,
           dateObj: date,
           symptomEntries: [],
-          bowelEntries: []
+          bowelEntries: [],
+          foodEntries: []
         });
       }
 
@@ -59,6 +82,29 @@ export default function DailyLogScreen() {
       } else if (entry.type === 'bowel') {
         dayEntry.bowelEntries.push(entry as BowelEntry);
       }
+    });
+
+    // Add food entries grouped by date
+    foodEntries.forEach((foodEntry) => {
+      const date = new Date(foodEntry.createdAt);
+      const dateKey = date.toDateString();
+      
+      if (!entriesByDate.has(dateKey)) {
+        entriesByDate.set(dateKey, {
+          date: dateKey,
+          dateObj: date,
+          symptomEntries: [],
+          bowelEntries: [],
+          foodEntries: []
+        });
+      }
+
+      const dayEntry = entriesByDate.get(dateKey)!;
+      dayEntry.foodEntries.push({
+        dishEventId: foodEntry.dishEventId,
+        dishName: foodEntry.dishName,
+        occurredAt: foodEntry.createdAt
+      });
     });
 
     // Convert to array and sort by date (newest first)
@@ -83,8 +129,9 @@ export default function DailyLogScreen() {
       default:
         return sortedEntries;
     }
-  }, [symptomEntries, bowelEntries, viewMode]);
+  }, [symptomEntries, bowelEntries, foodEntries, viewMode]);
 
+  // TODO: move to helper functions in util folder
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
@@ -92,6 +139,7 @@ export default function DailyLogScreen() {
     });
   };
 
+  // TODO: move to helper functions in util folder
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -148,11 +196,17 @@ export default function DailyLogScreen() {
                 {(() => {
                   const allDayEntries = [
                     ...dayEntry.symptomEntries.map(entry => ({ ...entry, type: 'symptom' as const })),
-                    ...dayEntry.bowelEntries.map(entry => ({ ...entry, type: 'bowel' as const }))
+                    ...dayEntry.bowelEntries.map(entry => ({ ...entry, type: 'bowel' as const })),
+                    ...dayEntry.foodEntries.map(foodEntry => ({
+                      type: 'food' as const,
+                      dishEventId: foodEntry.dishEventId,
+                      dishName: foodEntry.dishName,
+                      occurredAt: foodEntry.occurredAt
+                    }))
                   ].sort((a, b) => b.occurredAt - a.occurredAt);
 
-                  return allDayEntries.map((entry) => (
-                    <View key={`${entry.type}-${entry.id}`} style={styles.entryItem}>
+                  return allDayEntries.map((entry, index) => (
+                    <View key={`${entry.type}-${entry.type === 'food' ? entry.dishEventId : entry.id}`} style={styles.entryItem}>
                       <View style={styles.entryRow}>
                         <Text variant="bodySmall" style={styles.entryTime}>
                           {formatTime(entry.occurredAt)}
@@ -168,6 +222,12 @@ export default function DailyLogScreen() {
                             Bowel Movement
                           </Text>
                         )}
+
+                        {entry.type === 'food' && (
+                          <Text variant="bodyMedium" style={styles.entryText}>
+                            {entry.dishName}
+                          </Text>
+                        )}
                       </View>
                     </View>
                   ));
@@ -178,7 +238,8 @@ export default function DailyLogScreen() {
                 <View style={styles.summaryContainer}>
                   <Text variant="bodySmall" style={styles.summaryText}>
                     {dayEntry.symptomEntries.length} symptoms • {' '}
-                    {dayEntry.bowelEntries.length} bowel movements
+                    {dayEntry.bowelEntries.length} bowel movements • {' '}
+                    {dayEntry.foodEntries.length} meals
                   </Text>
                 </View>
               </Card.Content>

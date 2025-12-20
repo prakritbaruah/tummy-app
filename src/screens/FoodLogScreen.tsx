@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { TextInput, Button, Text, ActivityIndicator } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme, commonStyles } from '@/styles';
+import { createFoodEntry } from '@/data/foodEntryService';
+import { CreateFoodEntryResponse } from '@/types/foodEntry';
+
+type RootStackParamList = {
+  ConfirmFoodEntry: { response: CreateFoodEntryResponse };
+  FoodLog: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'FoodLog'>;
 
 export default function FoodLogScreen() {
+  const navigation = useNavigation<NavigationProp>();
   const [showTextInput, setShowTextInput] = useState(false);
   const [showMicrophoneText, setShowMicrophoneText] = useState(false);
   const [foodText, setFoodText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCameraPress = () => {
     console.log('Camera button clicked');
@@ -31,11 +45,31 @@ export default function FoodLogScreen() {
     setShowTextInput(false);
   };
 
-  const handleSubmit = () => {
-    console.log('Submit button clicked with text:', foodText);
-    if (foodText.trim()) {
+  const handleSubmit = async () => {
+    if (!foodText.trim()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await createFoodEntry({
+        raw_entry_text: foodText.trim(),
+      });
+
+      // Navigate to confirmation screen with the response
+      navigation.navigate('ConfirmFoodEntry', { response });
+      
+      // Reset form
       setFoodText('');
       setShowTextInput(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process food entry';
+      setError(errorMessage);
+      console.error('Error creating food entry:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -84,16 +118,27 @@ export default function FoodLogScreen() {
           <TextInput
             placeholder="Write naturally about what you ate and drank today and our AI will do the rest."
             value={foodText}
-            onChangeText={setFoodText}
+            onChangeText={(text) => {
+              setFoodText(text);
+              setError(null);
+            }}
             style={styles.textInput}
             multiline
+            disabled={isLoading}
           />
+          {error && (
+            <Text variant="bodySmall" style={styles.errorText}>
+              {error}
+            </Text>
+          )}
           <Button 
             mode="contained" 
             onPress={handleSubmit} 
             style={styles.submitButton}
+            disabled={isLoading || !foodText.trim()}
+            loading={isLoading}
           >
-            Submit
+            {isLoading ? 'Processing...' : 'Submit'}
           </Button>
         </View>
       )}
@@ -137,5 +182,9 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: theme.spacing.sm,
+  },
+  errorText: {
+    color: '#d32f2f',
+    marginBottom: theme.spacing.sm,
   },
 });

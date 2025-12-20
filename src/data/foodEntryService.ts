@@ -26,9 +26,11 @@ import {
 } from '@/data/foodEntryRepo';
 import { supabase } from '@/lib/supabase';
 import { getAuthenticatedUserId } from '@/data/utils';
+import { logger } from '@/utils/logger';
 
 const MODEL_VERSION = 'v1-stub';
 const PROMPT_VERSION = 'v1-stub';
+const FILENAME = 'foodEntryService.ts';
 
 /**
  * Creates a new food entry from raw text, extracts dishes, matches them to existing dishes,
@@ -37,13 +39,17 @@ const PROMPT_VERSION = 'v1-stub';
 export async function createFoodEntry(
   request: CreateFoodEntryRequest,
 ): Promise<CreateFoodEntryResponse> {
+  logger.info(FILENAME, 'createFoodEntry', 'Creating food entry', { rawEntryTextLength: request.raw_entry_text.length });
   const userId = await getAuthenticatedUserId();
+  logger.info(FILENAME, 'createFoodEntry', 'Authenticated user ID', { userId });
 
   // Step 1: Insert raw_entry
   const rawEntry = await createRawFoodEntry(userId, request.raw_entry_text);
+  logger.info(FILENAME, 'createFoodEntry', 'Raw food entry created', { rawEntryId: rawEntry.id });
 
   // Step 2: Extract dishes using LLM stub
   const extractedDishes = await llmExtractDishes(request.raw_entry_text);
+  logger.info(FILENAME, 'createFoodEntry', 'Dishes extracted', { dishCount: extractedDishes.length });
 
   const dishEvents: Array<{
     dishEvent: { id: string; dishId: string };
@@ -53,6 +59,10 @@ export async function createFoodEntry(
 
   // Step 3: Process each extracted dish
   for (const extracted of extractedDishes) {
+    logger.info(FILENAME, 'createFoodEntry', 'Processing dish', { 
+      dishNameSuggestion: extracted.dish_name_suggestion,
+      fragmentText: extracted.dish_fragment_text.substring(0, 50) + '...'
+    });
     // Insert predicted_dish
     const predictedDish = await createPredictedDish({
       rawEntryId: rawEntry.id,
@@ -67,10 +77,16 @@ export async function createFoodEntry(
       userId,
       dishNameSuggestion: extracted.dish_name_suggestion,
     });
+    logger.info(FILENAME, 'createFoodEntry', 'Dish found/created', { dishId: beforeCreate.id, dishName: beforeCreate.dishName });
     
     // Check if dish existed before (by checking if it has any confirmed triggers)
     const existingTriggers = await getMostRecentDishTriggers(beforeCreate.id);
     const isNewDish = existingTriggers.length === 0;
+    if (isNewDish) {
+      logger.info(FILENAME, 'createFoodEntry', 'New dish created', { dishId: beforeCreate.id, dishName: beforeCreate.dishName });
+    } else {
+      logger.info(FILENAME, 'createFoodEntry', 'Existing dish found', { dishId: beforeCreate.id, dishName: beforeCreate.dishName });
+    }
     
     const dish = beforeCreate;
 
@@ -81,6 +97,7 @@ export async function createFoodEntry(
       predictedDishId: predictedDish.id,
       rawEntryId: rawEntry.id,
     });
+    logger.info(FILENAME, 'createFoodEntry', 'Dish event created', { dishEventId: dishEvent.id, dishId: dish.id });
 
     dishEvents.push({
       dishEvent: { id: dishEvent.id, dishId: dish.id },
@@ -88,24 +105,34 @@ export async function createFoodEntry(
       isNewDish,
     });
   }
+  logger.info(FILENAME, 'createFoodEntry', 'All dishes processed', { dishEventCount: dishEvents.length });
 
   // Step 4: Predict triggers for each dish_event
   const allTriggerNames = new Set<string>();
 
   for (const { dishEvent, dishName, isNewDish } of dishEvents) {
+    logger.info(FILENAME, 'createFoodEntry', 'Predicting triggers for dish event', { 
+      dishEventId: dishEvent.id, 
+      dishName, 
+      isNewDish 
+    });
     let triggerNames: string[];
 
     if (isNewDish) {
       // For new dishes, use LLM stub to predict triggers
+      logger.info(FILENAME, 'createFoodEntry', 'Using LLM to predict triggers for new dish', { dishName });
       const predictedDish = extractedDishes.find(
         (ed) => ed.dish_name_suggestion === dishName,
       );
       const fragmentText = predictedDish?.dish_fragment_text || dishName;
       triggerNames = await llmPredictTriggers(dishName, fragmentText);
+      logger.info(FILENAME, 'createFoodEntry', 'LLM predicted triggers', { dishName, triggerCount: triggerNames.length, triggers: triggerNames });
     } else {
       // For existing dishes, copy from most recent confirmed triggers
+      logger.info(FILENAME, 'createFoodEntry', 'Copying triggers from most recent dish event', { dishId: dishEvent.dishId });
       const recentTriggers = await getMostRecentDishTriggers(dishEvent.dishId);
       triggerNames = recentTriggers.map((t) => t.triggerName);
+      logger.info(FILENAME, 'createFoodEntry', 'Copied triggers from existing dish', { dishId: dishEvent.dishId, triggerCount: triggerNames.length, triggers: triggerNames });
     }
 
     // Store trigger names for later lookup
@@ -113,6 +140,7 @@ export async function createFoodEntry(
 
     // Get trigger IDs
     const triggers = await getTriggersByNames(Array.from(triggerNames));
+    logger.info(FILENAME, 'createFoodEntry', 'Retrieved trigger IDs', { triggerCount: triggers.length });
 
     // Insert predicted_dish_triggers
     for (const trigger of triggers) {
@@ -124,7 +152,12 @@ export async function createFoodEntry(
         promptVersion: PROMPT_VERSION,
       });
     }
+    logger.info(FILENAME, 'createFoodEntry', 'Predicted dish triggers created', { 
+      dishEventId: dishEvent.id, 
+      triggerCount: triggers.length 
+    });
   }
+  logger.info(FILENAME, 'createFoodEntry', 'All triggers predicted', { uniqueTriggerCount: allTriggerNames.size });
 
   // Step 5: Build response
   const dishEventIds = dishEvents.map((de) => de.dishEvent.id);
@@ -149,6 +182,12 @@ export async function createFoodEntry(
     };
   });
 
+  logger.info(FILENAME, 'createFoodEntry', 'Food entry creation completed', { 
+    entryId: rawEntry.id, 
+    dishCount: dishes.length,
+    totalPredictedTriggers: predictedTriggers.length
+  });
+
   return {
     entry_id: rawEntry.id,
     dishes,
@@ -162,16 +201,27 @@ export async function confirmFoodEntry(
   rawEntryId: string,
   request: ConfirmFoodEntryRequest,
 ): Promise<ConfirmFoodEntryResponse> {
+  logger.info(FILENAME, 'confirmFoodEntry', 'Confirming food entry', { 
+    rawEntryId, 
+    confirmedDishCount: request.confirmed_dishes.length 
+  });
   await getAuthenticatedUserId(); // Verify auth
 
   // Step 1: Process each confirmed dish
   for (const confirmed of request.confirmed_dishes) {
+    logger.info(FILENAME, 'confirmFoodEntry', 'Processing confirmed dish', {
+      dishEventId: confirmed.dish_event_id,
+      dishId: confirmed.dish_id,
+      finalDishName: confirmed.final_dish_name,
+      triggerCount: confirmed.trigger_ids.length
+    });
     // Update dish name if changed
     const dishEvent = (await getDishEventsByRawFoodEntryId(rawEntryId)).find(
       (de) => de.id === confirmed.dish_event_id,
     );
 
     if (!dishEvent) {
+      logger.error(FILENAME, 'confirmFoodEntry', 'Dish event not found', new Error(`Dish event not found: ${confirmed.dish_event_id}`));
       throw new Error(`Dish event not found: ${confirmed.dish_event_id}`);
     }
 
@@ -185,15 +235,18 @@ export async function confirmFoodEntry(
       .single();
 
     if (dishError) {
+      logger.error(FILENAME, 'confirmFoodEntry', 'Dish not found', dishError);
       throw new Error(`Dish not found: ${dishError.message}`);
     }
 
     if (!dishRow) {
+      logger.error(FILENAME, 'confirmFoodEntry', 'Dish not found', new Error(`Dish not found: ${confirmed.dish_id}`));
       throw new Error(`Dish not found: ${confirmed.dish_id}`);
     }
 
     // Verify the dish belongs to the correct user
     if (dishRow.user_id !== dishEvent.userId) {
+      logger.error(FILENAME, 'confirmFoodEntry', 'Dish ownership mismatch', new Error('Dish does not belong to the user'));
       throw new Error('Dish does not belong to the user');
     }
 
@@ -209,6 +262,11 @@ export async function confirmFoodEntry(
       currentDish.dishName !== confirmed.final_dish_name ||
       currentDish.normalizedDishName !== normalizedName
     ) {
+      logger.info(FILENAME, 'confirmFoodEntry', 'Dish name changed, updating', {
+        dishId: confirmed.dish_id,
+        oldName: currentDish.dishName,
+        newName: confirmed.final_dish_name
+      });
       // Check if another dish with the new normalized name already exists
       const { data: existingDishWithNewName, error: checkError } = await supabase
         .from('dish')
@@ -219,11 +277,17 @@ export async function confirmFoodEntry(
 
       if (checkError && checkError.code !== 'PGRST116') {
         // PGRST116 is "not found" - that's what we want
+        logger.error(FILENAME, 'confirmFoodEntry', 'Failed to check for existing dish', checkError);
         throw new Error(`Failed to check for existing dish: ${checkError.message}`);
       }
 
       // If a dish with the new normalized name exists and it's not the current dish, we have a conflict
       if (existingDishWithNewName && existingDishWithNewName.id !== confirmed.dish_id) {
+        logger.warn(FILENAME, 'confirmFoodEntry', 'Dish name conflict detected', {
+          dishId: confirmed.dish_id,
+          conflictingDishId: existingDishWithNewName.id,
+          normalizedName
+        });
         throw new Error(
           `Cannot update dish name: a dish with normalized name "${normalizedName}" already exists`,
         );
@@ -234,17 +298,28 @@ export async function confirmFoodEntry(
         dishName: confirmed.final_dish_name,
         normalizedDishName: normalizedName,
       });
+      logger.info(FILENAME, 'confirmFoodEntry', 'Dish name updated successfully', { dishId: confirmed.dish_id });
     }
 
     // Upsert dish triggers
+    logger.info(FILENAME, 'confirmFoodEntry', 'Upserting dish triggers', {
+      dishEventId: confirmed.dish_event_id,
+      triggerCount: confirmed.trigger_ids.length
+    });
     await upsertDishTriggersForEvent(confirmed.dish_event_id, confirmed.trigger_ids);
+    logger.info(FILENAME, 'confirmFoodEntry', 'Dish triggers upserted successfully', { dishEventId: confirmed.dish_event_id });
   }
+  logger.info(FILENAME, 'confirmFoodEntry', 'All confirmed dishes processed');
 
   // Step 2: Build response with final state
   const dishEvents = await getDishEventsByRawFoodEntryId(rawEntryId);
+  logger.info(FILENAME, 'confirmFoodEntry', 'Retrieved dish events', { dishEventCount: dishEvents.length });
+  
   const dishEventIds = dishEvents.map((de) => de.id);
 
   const confirmedTriggers = await getConfirmedTriggersByDishEventIds(dishEventIds);
+  logger.info(FILENAME, 'confirmFoodEntry', 'Retrieved confirmed triggers', { triggerCount: confirmedTriggers.length });
+  
   const triggerIds = new Set(confirmedTriggers.map((ct) => ct.triggerId));
 
   // Get all unique trigger IDs and fetch their names
@@ -278,8 +353,69 @@ export async function confirmFoodEntry(
     };
   });
 
+  logger.info(FILENAME, 'confirmFoodEntry', 'Food entry confirmation completed', {
+    rawEntryId,
+    dishCount: dishes.length,
+    totalConfirmedTriggers: confirmedTriggers.length
+  });
+
   return {
     entry_id: rawEntryId,
     dishes,
   };
+}
+
+/**
+ * Fetches all dish events with dish names for the authenticated user.
+ * Returns dish events directly using their created_at timestamp.
+ */
+export async function getFoodEntriesForUser(): Promise<Array<{
+  dishEventId: string;
+  dishName: string;
+  createdAt: number; // timestamp
+}>> {
+  const userId = await getAuthenticatedUserId();
+  logger.info(FILENAME, 'getFoodEntriesForUser', 'Fetching food entries for user', { userId });
+
+  // Get all dish events for the user with dish names using a join
+  const { data: dishEventsData, error: dishEventsError } = await supabase
+    .from('dish_events')
+    .select(`
+      id,
+      created_at,
+      dish:dish_id (
+        id,
+        dish_name
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (dishEventsError) {
+    logger.error(FILENAME, 'getFoodEntriesForUser', 'Failed to fetch dish events', dishEventsError);
+    throw new Error(`Failed to fetch dish events: ${dishEventsError.message}`);
+  }
+
+  if (!dishEventsData) {
+    logger.info(FILENAME, 'getFoodEntriesForUser', 'No dish events found');
+    return [];
+  }
+
+  logger.info(FILENAME, 'getFoodEntriesForUser', 'Retrieved dish events', { count: dishEventsData.length });
+
+  // Map to simplified format
+  const result = dishEventsData.map((row: any) => {
+    const dish = row.dish;
+    const dishName = dish?.dish_name || 'Unknown';
+    const createdAt = new Date(row.created_at).getTime();
+
+    return {
+      dishEventId: row.id,
+      dishName,
+      createdAt,
+    };
+  });
+
+  logger.info(FILENAME, 'getFoodEntriesForUser', 'Food entries fetched successfully', { entryCount: result.length });
+  return result;
 }

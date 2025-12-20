@@ -220,6 +220,24 @@ export async function getTriggerById(triggerId: string): Promise<Trigger | null>
   return fromTriggerRow(data as TriggerRow);
 }
 
+// TODO: consider replacing with hardcoded list of triggers
+export async function getAllTriggers(): Promise<Trigger[]> {
+  const { data, error } = await supabase
+    .from('triggers')
+    .select('*')
+    .order('trigger_name', { ascending: true });
+
+  if (error) {
+    handleError(error);
+  }
+
+  if (!data) {
+    return [];
+  }
+
+  return data.map((row) => fromTriggerRow(row as TriggerRow));
+}
+
 // Predicted Dish Trigger operations
 export async function createPredictedDishTrigger(
   predictedTrigger: Omit<PredictedDishTrigger, 'id' | 'createdAt'>,

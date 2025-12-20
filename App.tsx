@@ -19,6 +19,7 @@ import { AuthProvider, useAuth } from '@/contexts';
 // Import screens
 import HomeScreen from '@/screens/HomeScreen';
 import FoodLogScreen from '@/screens/FoodLogScreen';
+import ConfirmFoodEntryScreen from '@/screens/ConfirmFoodEntryScreen';
 import SymptomsScreen from '@/screens/SymptomsScreen';
 import BowelScreen from '@/screens/BowelScreen';
 import DailyLogScreen from '@/screens/DailyLogScreen';
@@ -152,6 +153,11 @@ function AuthNavigator() {
         name="FoodLog" 
         component={FoodLogScreen}
         options={{ title: 'Add Meal' }}
+      />
+      <Stack.Screen 
+        name="ConfirmFoodEntry" 
+        component={ConfirmFoodEntryScreen}
+        options={{ title: 'Confirm Meal' }}
       />
       <Stack.Screen 
         name="Symptoms" 
