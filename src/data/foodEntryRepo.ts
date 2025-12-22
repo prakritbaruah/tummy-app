@@ -353,3 +353,18 @@ export async function getConfirmedTriggersByDishEventIds(
 
   return data.map((row) => fromDishTriggerRow(row as DishTriggerRow));
 }
+
+// Update dish events to mark them as confirmed
+export async function updateDishEventConfirmation(
+  dishEventIds: string[],
+  confirmed: boolean = true,
+): Promise<void> {
+  const { error } = await supabase
+    .from('dish_events')
+    .update({ confirmed_by_user: confirmed })
+    .in('id', dishEventIds);
+
+  if (error) {
+    handleError(error);
+  }
+}

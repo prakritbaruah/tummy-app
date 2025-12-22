@@ -54,6 +54,7 @@ export interface DishEventRow {
   dish_id: string;
   predicted_dish_id: string | null;
   raw_entry_id: string;
+  confirmed_by_user: boolean;
   created_at: string;
 }
 

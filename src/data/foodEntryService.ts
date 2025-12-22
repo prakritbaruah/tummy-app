@@ -11,7 +11,7 @@ import {
   normalizeDishName,
   upsertDishTriggersForEvent,
 } from '@/data/dishHelpers';
-import { llmExtractDishes, llmPredictTriggers } from '@/data/llmStubs';
+import { llmExtractDishes, llmPredictTriggers } from '@/data/llmService';
 import {
   createDishEvent,
   createPredictedDishTrigger,
@@ -23,13 +23,13 @@ import {
   getTriggerById,
   getTriggersByNames,
   updateDish,
+  updateDishEventConfirmation,
 } from '@/data/foodEntryRepo';
 import { supabase } from '@/lib/supabase';
 import { getAuthenticatedUserId } from '@/data/utils';
 import { logger } from '@/utils/logger';
+import { MODEL_VERSION, PROMPT_VERSION } from '@/lib/llmPrompts';
 
-const MODEL_VERSION = 'v1-stub';
-const PROMPT_VERSION = 'v1-stub';
 const FILENAME = 'foodEntryService.ts';
 
 /**
@@ -96,6 +96,7 @@ export async function createFoodEntry(
       dishId: dish.id,
       predictedDishId: predictedDish.id,
       rawEntryId: rawEntry.id,
+      confirmedByUser: false,
     });
     logger.info(FILENAME, 'createFoodEntry', 'Dish event created', { dishEventId: dishEvent.id, dishId: dish.id });
 
@@ -311,11 +312,15 @@ export async function confirmFoodEntry(
   }
   logger.info(FILENAME, 'confirmFoodEntry', 'All confirmed dishes processed');
 
-  // Step 2: Build response with final state
+  // Step 2: Mark all dish events for this raw entry as confirmed
   const dishEvents = await getDishEventsByRawFoodEntryId(rawEntryId);
-  logger.info(FILENAME, 'confirmFoodEntry', 'Retrieved dish events', { dishEventCount: dishEvents.length });
-  
   const dishEventIds = dishEvents.map((de) => de.id);
+  logger.info(FILENAME, 'confirmFoodEntry', 'Marking dish events as confirmed', { dishEventCount: dishEventIds.length });
+  await updateDishEventConfirmation(dishEventIds, true);
+  logger.info(FILENAME, 'confirmFoodEntry', 'Dish events marked as confirmed successfully');
+
+  // Step 3: Build response with final state
+  logger.info(FILENAME, 'confirmFoodEntry', 'Retrieved dish events', { dishEventCount: dishEvents.length });
 
   const confirmedTriggers = await getConfirmedTriggersByDishEventIds(dishEventIds);
   logger.info(FILENAME, 'confirmFoodEntry', 'Retrieved confirmed triggers', { triggerCount: confirmedTriggers.length });
@@ -377,7 +382,7 @@ export async function getFoodEntriesForUser(): Promise<Array<{
   const userId = await getAuthenticatedUserId();
   logger.info(FILENAME, 'getFoodEntriesForUser', 'Fetching food entries for user', { userId });
 
-  // Get all dish events for the user with dish names using a join
+  // Get all confirmed dish events for the user with dish names using a join
   const { data: dishEventsData, error: dishEventsError } = await supabase
     .from('dish_events')
     .select(`
@@ -389,6 +394,7 @@ export async function getFoodEntriesForUser(): Promise<Array<{
       )
     `)
     .eq('user_id', userId)
+    .eq('confirmed_by_user', true)
     .order('created_at', { ascending: false });
 
   if (dishEventsError) {

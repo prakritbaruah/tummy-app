@@ -12,6 +12,5 @@ export const env = {
     process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     'EXPO_PUBLIC_SUPABASE_ANON_KEY',
   ),
-  // Note: supabaseDevUserId has been removed. All data access now requires authentication.
-  // The authenticated user ID is automatically obtained from the Supabase session.
+  openaiApiKey: requireEnv(process.env.EXPO_PUBLIC_OPENAI_API_KEY, 'EXPO_PUBLIC_OPENAI_API_KEY'),
 };

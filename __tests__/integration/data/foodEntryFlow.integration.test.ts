@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { describe, expect, it, beforeAll, afterAll } from 'vitest';
+import { describe, expect, it, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 import { createFoodEntry, confirmFoodEntry } from '@/data/foodEntryService';
 import { supabase } from '@/lib/supabase';
+import * as openaiModule from '@/lib/openai';
 
 /**
  * Integration tests for food entry flow.
@@ -201,6 +202,176 @@ describe('foodEntryFlow integration (test database)', () => {
     });
     return map;
   };
+
+  /**
+   * Helper function to create OpenAI API response in the expected format.
+   */
+  function createOpenAIResponse(data: { dishes?: any[]; triggers?: string[] }): any {
+    return {
+      choices: [
+        {
+          message: {
+            content: JSON.stringify(data),
+          },
+        },
+      ],
+    };
+  }
+
+  /**
+   * Helper function to determine expected triggers based on dish name.
+   * Returns triggers matching test expectations.
+   */
+  function getExpectedTriggers(dishName: string): string[] {
+    const lower = dishName.toLowerCase();
+
+    // Specific dishes with known triggers
+    if (lower.includes('grilled salmon')) {
+      return [];
+    }
+    if (lower.includes('chocolate croissant')) {
+      return ['gluten', 'dairy', 'sugar'];
+    }
+    if (lower.includes('cherry turnover')) {
+      return ['gluten', 'sugar'];
+    }
+    if (lower.includes('matcha latte')) {
+      return ['caffeine'];
+    }
+    return [];
+  }
+
+  /**
+   * Simple helper to normalize dish names (capitalize each word).
+   * This mirrors the behavior we expect from the real LLM and supports
+   * the normalization tests (e.g., casing/spacing variants of "Chocolate Croissant").
+   */
+  function normalizeDishName(name: string): string {
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  // Mock OpenAI API calls for deterministic test outputs
+  let openAIMock: any;
+
+  beforeEach(() => {
+    // Create a mock OpenAI client
+    const mockClient = {
+      chat: {
+        completions: {
+          create: vi.fn(),
+        },
+      },
+    };
+
+    // Mock getOpenAIClient to return our mock client
+    vi.spyOn(openaiModule, 'getOpenAIClient').mockReturnValue(mockClient as any);
+
+    // Set up the mock implementation to return deterministic responses based on prompt content
+    openAIMock = mockClient.chat.completions.create;
+    openAIMock.mockImplementation(async (params: any) => {
+      const prompt = params.messages[0]?.content || '';
+      
+      // Determine response based on prompt content
+      if (prompt.includes('Extract individual dishes')) {
+        // This is llmExtractDishes call
+        // Extract the user input from the prompt (between "User input: " and the next quote)
+        const userInputMatch = prompt.match(/User input: "([^"]+)"/);
+        const userInput = userInputMatch ? userInputMatch[1] : '';
+        
+        // Check specific user inputs first (before checking examples in the prompt)
+        if (userInput === 'Cherry turnover') {
+          return createOpenAIResponse({
+            dishes: [
+              {
+                dish_fragment_text: 'Cherry turnover',
+                dish_name_suggestion: 'Cherry Turnover',
+              },
+            ],
+          });
+        }
+        if (userInput === 'Chocolate Croissant and Matcha Latte') {
+          return createOpenAIResponse({
+            dishes: [
+              {
+                dish_fragment_text: 'Chocolate Croissant',
+                dish_name_suggestion: 'Chocolate Croissant',
+              },
+              {
+                dish_fragment_text: 'Matcha Latte',
+                dish_name_suggestion: 'Matcha Latte',
+              },
+            ],
+          });
+        }
+        if (userInput === 'Grilled Salmon') {
+          return createOpenAIResponse({
+            dishes: [
+              {
+                dish_fragment_text: 'Grilled Salmon',
+                dish_name_suggestion: 'Grilled Salmon',
+              },
+            ],
+          });
+        }
+        if (userInput === 'Pasta and Meatballs') {
+          return createOpenAIResponse({
+            dishes: [
+              {
+                dish_fragment_text: 'Pasta',
+                dish_name_suggestion: 'Pasta',
+              },
+              {
+                dish_fragment_text: 'Meatballs',
+                dish_name_suggestion: 'Meatballs',
+              },
+            ],
+          });
+        }
+        if (userInput === 'Pasta with Meatballs') {
+          return createOpenAIResponse({
+            dishes: [
+              {
+                dish_fragment_text: 'Pasta with Meatballs',
+                dish_name_suggestion: 'Pasta with Meatballs',
+              },
+            ],
+          });
+        }
+
+        // Default behavior: treat the entire user input as a single dish,
+        // and normalize the dish name for consistent matching.
+        if (userInput) {
+          return createOpenAIResponse({
+            dishes: [
+              {
+                dish_fragment_text: userInput,
+                dish_name_suggestion: normalizeDishName(userInput),
+              },
+            ],
+          });
+        }
+      } else if (prompt.includes('Predict potential food triggers')) {
+        // This is llmPredictTriggers call - extract dish name from prompt
+        const dishNameMatch = prompt.match(/Dish name: "([^"]+)"/);
+        const dishName = dishNameMatch ? dishNameMatch[1] : '';
+        
+        const triggers = getExpectedTriggers(dishName);
+        
+        return createOpenAIResponse({ triggers });
+      }
+      
+      // Fallback response
+      return createOpenAIResponse({ dishes: [], triggers: [] });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   describe('createFoodEntry', () => {
     it(
@@ -718,6 +889,97 @@ describe('foodEntryFlow integration (test database)', () => {
         // Cleanup
         await cleanup(firstResult.entry_id);
         await cleanup(secondResult.entry_id);
+      },
+      30000,
+    );
+
+    it(
+      'handles API failure gracefully - allows users to choose their own triggers',
+      async () => {
+        // Mock OpenAI to throw an error for trigger prediction only
+        // Keep dish extraction working so we have a dish to work with
+        const originalMock = openAIMock;
+        
+        // First call (extract dishes) - let it work normally
+        // Second call (predict triggers) - make it fail
+        let callCount = 0;
+        openAIMock.mockImplementation(async (params: any) => {
+          callCount++;
+          const prompt = params.messages[0]?.content || '';
+          
+          if (prompt.includes('Extract individual dishes')) {
+            // Return normal response for dish extraction
+            return {
+              choices: [
+                {
+                  message: {
+                    content: JSON.stringify({
+                      dishes: [
+                        {
+                          dish_fragment_text: 'Grilled Salmon',
+                          dish_name_suggestion: 'Grilled Salmon',
+                        },
+                      ],
+                    }),
+                  },
+                },
+              ],
+            };
+          } else if (prompt.includes('Predict potential food triggers')) {
+            // Make trigger prediction fail
+            throw new Error('API rate limit exceeded');
+          }
+          return { choices: [{ message: { content: '{}' } }] };
+        });
+
+        // Create entry - dish extraction should work, trigger prediction will fail
+        const result = await createFoodEntry({
+          raw_entry_text: 'Grilled Salmon',
+        });
+
+        // Verify entry was created with dish
+        expect(result.entry_id).toBeDefined();
+        expect(result.dishes).toHaveLength(1);
+        expect(result.dishes[0].dish_name).toBe('Grilled Salmon');
+        
+        // When trigger prediction fails, we should have no predicted triggers
+        // but the dish event should still exist
+        expect(result.dishes[0].predicted_triggers).toBeDefined();
+        // May be empty or have some triggers depending on fallback behavior
+
+        const dishEvent = result.dishes[0];
+
+        // Get trigger IDs
+        const triggerMap = await getTriggerIds(['gluten', 'dairy']);
+        const glutenId = triggerMap.get('gluten');
+        const dairyId = triggerMap.get('dairy');
+
+        expect(glutenId).toBeDefined();
+        expect(dairyId).toBeDefined();
+
+        // User can still confirm with their own triggers even if API failed
+        const confirmResult = await confirmFoodEntry(result.entry_id, {
+          confirmed_dishes: [
+            {
+              dish_event_id: dishEvent.dish_event_id,
+              dish_id: dishEvent.dish_id,
+              final_dish_name: 'Grilled Salmon',
+              trigger_ids: [glutenId!, dairyId!], // User manually selects triggers
+            },
+          ],
+        });
+
+        // Verify confirmation worked
+        expect(confirmResult.entry_id).toBe(result.entry_id);
+        expect(confirmResult.dishes).toHaveLength(1);
+        expect(confirmResult.dishes[0].triggers).toBeDefined();
+        expect(confirmResult.dishes[0].triggers?.length).toBe(2);
+
+        // Restore original mock
+        openAIMock = originalMock;
+
+        // Cleanup
+        await cleanup(result.entry_id);
       },
       30000,
     );

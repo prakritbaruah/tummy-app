@@ -34,6 +34,7 @@ export interface DishEvent {
   dishId: string;
   predictedDishId: string | null;
   rawEntryId: string;
+  confirmedByUser: boolean;
   createdAt: Timestamp;
 }
 

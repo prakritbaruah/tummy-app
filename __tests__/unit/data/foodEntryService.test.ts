@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { confirmFoodEntry, createFoodEntry } from '@/data/foodEntryService';
 import * as dishHelpers from '@/data/dishHelpers';
 import * as foodEntryRepo from '@/data/foodEntryRepo';
-import * as llmStubs from '@/data/llmStubs';
+import * as llmService from '@/data/llmService';
 import * as utils from '@/data/utils';
 import { supabase } from '@/lib/supabase';
 import { DishRow, DishEventRow } from '@/types/supabase';
@@ -65,7 +65,7 @@ describe('foodEntryService', () => {
         createdAt: Date.now(),
       });
 
-      vi.spyOn(llmStubs, 'llmExtractDishes').mockResolvedValue([
+      vi.spyOn(llmService, 'llmExtractDishes').mockResolvedValue([
         {
           dish_fragment_text: 'Chocolate croissant',
           dish_name_suggestion: 'Chocolate Croissant',
@@ -102,11 +102,12 @@ describe('foodEntryService', () => {
         dishId: 'dish-1',
         predictedDishId: 'predicted-dish-1',
         rawEntryId: 'raw-entry-1',
+        confirmedByUser: false,
         createdAt: Date.now(),
       });
 
       // Step 4a: Mock LLM trigger prediction (for new dishes)
-      vi.spyOn(llmStubs, 'llmPredictTriggers').mockResolvedValue(['gluten']);
+      vi.spyOn(llmService, 'llmPredictTriggers').mockResolvedValue(['gluten']);
 
       // Step 4b: Mock trigger lookup by name
       vi.spyOn(foodEntryRepo, 'getTriggersByNames').mockResolvedValue([
@@ -173,7 +174,7 @@ describe('foodEntryService', () => {
       });
 
       // Step 2: Mock LLM dish extraction
-      vi.spyOn(llmStubs, 'llmExtractDishes').mockResolvedValue([
+      vi.spyOn(llmService, 'llmExtractDishes').mockResolvedValue([
         {
           dish_fragment_text: 'Chocolate croissant',
           dish_name_suggestion: 'Chocolate Croissant',
@@ -220,6 +221,7 @@ describe('foodEntryService', () => {
         dishId: 'dish-1',
         predictedDishId: 'predicted-dish-1',
         rawEntryId: 'raw-entry-1',
+        confirmedByUser: false,
         createdAt: Date.now(),
       });
 
@@ -268,7 +270,7 @@ describe('foodEntryService', () => {
       ]);
 
       // Spy on LLM to verify it's NOT called for existing dishes
-      const llmPredictSpy = vi.spyOn(llmStubs, 'llmPredictTriggers');
+      const llmPredictSpy = vi.spyOn(llmService, 'llmPredictTriggers');
 
       const result = await createFoodEntry({
         raw_entry_text: 'Chocolate croissant',
@@ -290,7 +292,7 @@ describe('foodEntryService', () => {
         createdAt: Date.now(),
       });
 
-      vi.spyOn(llmStubs, 'llmExtractDishes').mockResolvedValue([
+      vi.spyOn(llmService, 'llmExtractDishes').mockResolvedValue([
         {
           dish_fragment_text: 'Chocolate Croissant',
           dish_name_suggestion: 'Chocolate Croissant',
@@ -348,6 +350,7 @@ describe('foodEntryService', () => {
           dishId: 'dish-1',
           predictedDishId: 'predicted-dish-1',
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
           createdAt: Date.now(),
         })
         .mockResolvedValueOnce({
@@ -356,10 +359,11 @@ describe('foodEntryService', () => {
           dishId: 'dish-2',
           predictedDishId: 'predicted-dish-2',
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
           createdAt: Date.now(),
         });
 
-      vi.spyOn(llmStubs, 'llmPredictTriggers')
+      vi.spyOn(llmService, 'llmPredictTriggers')
         .mockResolvedValueOnce(['gluten'])
         .mockResolvedValueOnce(['caffeine']);
 

@@ -84,11 +84,12 @@ export async function findOrCreateDishForUser(args: {
  * Returns triggers from the most recent dish_event that has confirmed triggers.
  */
 export async function getMostRecentDishTriggers(dishId: string): Promise<Trigger[]> {
-  // Get all dish_events for this dish, ordered by most recent
+  // Get all confirmed dish_events for this dish, ordered by most recent
   const { data: dishEvents, error: eventsError } = await supabase
     .from('dish_events')
     .select('id, created_at')
     .eq('dish_id', dishId)
+    .eq('confirmed_by_user', true)
     .order('created_at', { ascending: false });
 
   if (eventsError) {

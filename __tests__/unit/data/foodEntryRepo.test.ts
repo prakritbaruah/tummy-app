@@ -358,6 +358,7 @@ describe('foodEntryRepo', () => {
         dish_id: 'dish-1',
         predicted_dish_id: 'predicted-dish-1',
         raw_entry_id: 'raw-entry-1',
+        confirmed_by_user: false,
         created_at: new Date().toISOString(),
       };
 
@@ -371,6 +372,7 @@ describe('foodEntryRepo', () => {
         dishId: 'dish-1',
         predictedDishId: 'predicted-dish-1',
         rawEntryId: 'raw-entry-1',
+        confirmedByUser: false,
       });
 
       expect(insert).toHaveBeenCalled();
@@ -393,6 +395,7 @@ describe('foodEntryRepo', () => {
           dishId: 'dish-1',
           predictedDishId: null,
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
         }),
       ).rejects.toThrow('insert failed');
     });
@@ -631,6 +634,7 @@ describe('foodEntryRepo', () => {
           predicted_dish_id: 'predicted-dish-1',
           raw_entry_id: 'raw-entry-1',
           created_at: new Date().toISOString(),
+          confirmed_by_user: true,
         },
         {
           id: 'dish-event-2',
@@ -639,6 +643,7 @@ describe('foodEntryRepo', () => {
           predicted_dish_id: 'predicted-dish-2',
           raw_entry_id: 'raw-entry-1',
           created_at: new Date().toISOString(),
+          confirmed_by_user: true,
         },
       ];
 

@@ -186,6 +186,7 @@ describe('mappers', () => {
       dishId: 'd1',
       predictedDishId: 'pd1',
       rawEntryId: 'rf1',
+      confirmedByUser: false,
     };
 
     const row = toDishEventRow(entry);
@@ -193,6 +194,7 @@ describe('mappers', () => {
     expect(row.dish_id).toBe('d1');
     expect(row.predicted_dish_id).toBe('pd1');
     expect(row.raw_entry_id).toBe('rf1');
+    expect(row.confirmed_by_user).toBe(false);
 
     const fullEntry: DishEvent = {
       id: 'de1',
@@ -214,10 +216,12 @@ describe('mappers', () => {
       dishId: 'd1',
       predictedDishId: null,
       rawEntryId: 'rf1',
+      confirmedByUser: false,
     };
 
     const row = toDishEventRow(entry);
     expect(row.predicted_dish_id).toBeNull();
+    expect(row.confirmed_by_user).toBe(false);
 
     const fullEntry: DishEvent = {
       id: 'de2',
