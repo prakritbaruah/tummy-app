@@ -21,6 +21,7 @@ export const palette = {
   trackInactive: '#d8d1c5',
   infoBackground: '#f4efff',
   white: '#ffffff',
+  error: '#d32f2f',
 } as const;
 
 const paperFonts = {
@@ -57,6 +58,7 @@ export const theme = {
     border: palette.border,
     trackInactive: palette.trackInactive,
     highlight: palette.secondary,
+    error: palette.error,
   },
   spacing: {
     xs: 4,

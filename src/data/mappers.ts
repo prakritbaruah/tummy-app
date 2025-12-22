@@ -149,6 +149,7 @@ export function toDishEventRow(
     predicted_dish_id: entry.predictedDishId,
     raw_entry_id: entry.rawEntryId,
     confirmed_by_user: entry.confirmedByUser,
+    deleted_at: entry.deletedAt !== null ? new Date(entry.deletedAt).toISOString() : null,
   };
 }
 
@@ -160,6 +161,7 @@ export function fromDishEventRow(row: DishEventRow): DishEvent {
     predictedDishId: row.predicted_dish_id,
     rawEntryId: row.raw_entry_id,
     confirmedByUser: row.confirmed_by_user,
+    deletedAt: row.deleted_at !== null ? new Date(row.deleted_at).getTime() : null,
     createdAt: new Date(row.created_at).getTime(),
   };
 }

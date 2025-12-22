@@ -222,7 +222,7 @@ describe('llmService', () => {
           {
             message: {
               content: JSON.stringify({
-                triggers: ['gluten', 'dairy', 'sugar'],
+                triggers: ['gluten', 'dairy', 'added_sugar'],
               }),
             },
           },
@@ -234,7 +234,7 @@ describe('llmService', () => {
       expect(result).toHaveLength(3);
       expect(result).toContain('gluten');
       expect(result).toContain('dairy');
-      expect(result).toContain('sugar');
+      expect(result).toContain('added_sugar');
     });
 
     it('parses empty triggers array', async () => {

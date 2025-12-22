@@ -22,6 +22,8 @@ import {
   getTriggerById,
   getTriggersByNames,
   updateDish,
+  updateDishEventDeletedAt,
+  updateDishEventConfirmation,
 } from '@/data/foodEntryRepo';
 import { supabase } from '@/lib/supabase';
 import {
@@ -359,6 +361,7 @@ describe('foodEntryRepo', () => {
         predicted_dish_id: 'predicted-dish-1',
         raw_entry_id: 'raw-entry-1',
         confirmed_by_user: false,
+        deleted_at: null,
         created_at: new Date().toISOString(),
       };
 
@@ -373,6 +376,7 @@ describe('foodEntryRepo', () => {
         predictedDishId: 'predicted-dish-1',
         rawEntryId: 'raw-entry-1',
         confirmedByUser: false,
+        deletedAt: null,
       });
 
       expect(insert).toHaveBeenCalled();
@@ -396,6 +400,7 @@ describe('foodEntryRepo', () => {
           predictedDishId: null,
           rawEntryId: 'raw-entry-1',
           confirmedByUser: false,
+          deletedAt: null,
         }),
       ).rejects.toThrow('insert failed');
     });
@@ -635,6 +640,7 @@ describe('foodEntryRepo', () => {
           raw_entry_id: 'raw-entry-1',
           created_at: new Date().toISOString(),
           confirmed_by_user: true,
+          deleted_at: null,
         },
         {
           id: 'dish-event-2',
@@ -644,12 +650,14 @@ describe('foodEntryRepo', () => {
           raw_entry_id: 'raw-entry-1',
           created_at: new Date().toISOString(),
           confirmed_by_user: true,
+          deleted_at: null,
         },
       ];
 
-      // Mock query chain: from('dish_events').select().eq('raw_entry_id').order('created_at')
+      // Mock query chain: from('dish_events').select().eq('raw_entry_id').is('deleted_at', null).order('created_at')
       const order = vi.fn().mockReturnValue(Promise.resolve({ data: rows, error: null }));
-      const eq = vi.fn().mockReturnValue({ order });
+      const is = vi.fn().mockReturnValue({ order });
+      const eq = vi.fn().mockReturnValue({ is });
       const select = vi.fn().mockReturnValue({ eq });
       (supabase as any).from = vi.fn().mockReturnValue({ select });
 
@@ -657,15 +665,59 @@ describe('foodEntryRepo', () => {
 
       // Verify query filters and ordering
       expect(eq).toHaveBeenCalledWith('raw_entry_id', 'raw-entry-1');
+      expect(is).toHaveBeenCalledWith('deleted_at', null);
       expect(order).toHaveBeenCalledWith('created_at', { ascending: false });
       // Verify results are returned in correct order (most recent first)
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('dish-event-1');
+      expect(result[0].deletedAt).toBeNull();
+    });
+
+    it('filters out deleted dish events', async () => {
+      const rows: DishEventRow[] = [
+        {
+          id: 'dish-event-1',
+          user_id: mockUser.id,
+          dish_id: 'dish-1',
+          predicted_dish_id: 'predicted-dish-1',
+          raw_entry_id: 'raw-entry-1',
+          created_at: new Date().toISOString(),
+          confirmed_by_user: true,
+          deleted_at: null,
+        },
+        // This one is deleted and should not be returned
+        {
+          id: 'dish-event-2',
+          user_id: mockUser.id,
+          dish_id: 'dish-2',
+          predicted_dish_id: 'predicted-dish-2',
+          raw_entry_id: 'raw-entry-1',
+          created_at: new Date().toISOString(),
+          confirmed_by_user: true,
+          deleted_at: new Date().toISOString(),
+        },
+      ];
+
+      // Mock query chain with deleted_at filter
+      const order = vi.fn().mockReturnValue(Promise.resolve({ data: [rows[0]], error: null }));
+      const is = vi.fn().mockReturnValue({ order });
+      const eq = vi.fn().mockReturnValue({ is });
+      const select = vi.fn().mockReturnValue({ eq });
+      (supabase as any).from = vi.fn().mockReturnValue({ select });
+
+      const result = await getDishEventsByRawFoodEntryId('raw-entry-1');
+
+      // Verify only non-deleted dish event is returned
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('dish-event-1');
+      expect(result[0].deletedAt).toBeNull();
+      expect(is).toHaveBeenCalledWith('deleted_at', null);
     });
 
     it('returns empty array when no events found', async () => {
       const order = vi.fn().mockReturnValue(Promise.resolve({ data: null, error: null }));
-      const eq = vi.fn().mockReturnValue({ order });
+      const is = vi.fn().mockReturnValue({ order });
+      const eq = vi.fn().mockReturnValue({ is });
       const select = vi.fn().mockReturnValue({ eq });
       (supabase as any).from = vi.fn().mockReturnValue({ select });
 
@@ -678,11 +730,113 @@ describe('foodEntryRepo', () => {
       const order = vi.fn().mockReturnValue(
         Promise.resolve({ data: null, error: { message: 'query failed' } }),
       );
-      const eq = vi.fn().mockReturnValue({ order });
+      const is = vi.fn().mockReturnValue({ order });
+      const eq = vi.fn().mockReturnValue({ is });
       const select = vi.fn().mockReturnValue({ eq });
       (supabase as any).from = vi.fn().mockReturnValue({ select });
 
       await expect(getDishEventsByRawFoodEntryId('raw-entry-1')).rejects.toThrow('query failed');
+    });
+  });
+
+  /**
+   * Tests for soft delete functionality (deleted_at)
+   */
+  describe('updateDishEventDeletedAt', () => {
+    it('sets deleted_at timestamp when deleting a dish event', async () => {
+      const deletedAtDate = new Date();
+      const deletedAtString = deletedAtDate.toISOString();
+      
+      const row: DishEventRow = {
+        id: 'dish-event-1',
+        user_id: mockUser.id,
+        dish_id: 'dish-1',
+        predicted_dish_id: 'predicted-dish-1',
+        raw_entry_id: 'raw-entry-1',
+        created_at: new Date().toISOString(),
+        confirmed_by_user: false,
+        deleted_at: deletedAtString,
+      };
+
+      // Mock query chain: from('dish_events').update().eq('id').select().single()
+      const single = vi.fn().mockReturnValue(Promise.resolve({ data: row, error: null }));
+      const select = vi.fn().mockReturnValue({ single });
+      const eq = vi.fn().mockReturnValue({ select });
+      const update = vi.fn().mockReturnValue({ eq });
+      (supabase as any).from = vi.fn().mockReturnValue({ update });
+
+      const result = await updateDishEventDeletedAt('dish-event-1', deletedAtDate);
+
+      // Verify update was called with correct parameters
+      expect(update).toHaveBeenCalledWith({ deleted_at: deletedAtString });
+      expect(eq).toHaveBeenCalledWith('id', 'dish-event-1');
+      // Verify result is correctly mapped
+      expect(result.id).toBe('dish-event-1');
+      expect(result.deletedAt).toBe(deletedAtDate.getTime());
+    });
+
+    it('throws error when update fails', async () => {
+      const single = vi.fn().mockReturnValue(
+        Promise.resolve({ data: null, error: { message: 'update failed' } }),
+      );
+      const select = vi.fn().mockReturnValue({ single });
+      const eq = vi.fn().mockReturnValue({ select });
+      const update = vi.fn().mockReturnValue({ eq });
+      (supabase as any).from = vi.fn().mockReturnValue({ update });
+
+      await expect(updateDishEventDeletedAt('dish-event-1', new Date())).rejects.toThrow(
+        'update failed',
+      );
+    });
+
+    it('throws error when no data returned', async () => {
+      const single = vi.fn().mockReturnValue(Promise.resolve({ data: null, error: null }));
+      const select = vi.fn().mockReturnValue({ single });
+      const eq = vi.fn().mockReturnValue({ select });
+      const update = vi.fn().mockReturnValue({ eq });
+      (supabase as any).from = vi.fn().mockReturnValue({ update });
+
+      await expect(updateDishEventDeletedAt('dish-event-1', new Date())).rejects.toThrow(
+        'Failed to update dish event deleted_at',
+      );
+    });
+  });
+
+  /**
+   * Tests for updating dish event confirmation status
+   */
+  describe('updateDishEventConfirmation', () => {
+    it('marks dish events as confirmed', async () => {
+      const inFn = vi.fn().mockReturnValue(Promise.resolve({ error: null }));
+      const update = vi.fn().mockReturnValue({ in: inFn });
+      (supabase as any).from = vi.fn().mockReturnValue({ update });
+
+      await updateDishEventConfirmation(['dish-event-1', 'dish-event-2'], true);
+
+      expect(update).toHaveBeenCalledWith({ confirmed_by_user: true });
+      expect(inFn).toHaveBeenCalledWith('id', ['dish-event-1', 'dish-event-2']);
+    });
+
+    it('marks dish events as unconfirmed', async () => {
+      const inFn = vi.fn().mockReturnValue(Promise.resolve({ error: null }));
+      const update = vi.fn().mockReturnValue({ in: inFn });
+      (supabase as any).from = vi.fn().mockReturnValue({ update });
+
+      await updateDishEventConfirmation(['dish-event-1'], false);
+
+      expect(update).toHaveBeenCalledWith({ confirmed_by_user: false });
+    });
+
+    it('throws error when update fails', async () => {
+      const inFn = vi.fn().mockReturnValue(
+        Promise.resolve({ error: { message: 'update failed' } }),
+      );
+      const update = vi.fn().mockReturnValue({ in: inFn });
+      (supabase as any).from = vi.fn().mockReturnValue({ update });
+
+      await expect(updateDishEventConfirmation(['dish-event-1'], true)).rejects.toThrow(
+        'update failed',
+      );
     });
   });
 

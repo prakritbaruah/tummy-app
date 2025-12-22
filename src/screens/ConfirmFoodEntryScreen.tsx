@@ -12,7 +12,9 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme, commonStyles } from '@/styles';
 import { confirmFoodEntry } from '@/data/foodEntryService';
-import { getAllTriggers } from '@/data/foodEntryRepo';
+import { getAllTriggers, createDishEvent, updateDishEventDeletedAt } from '@/data/foodEntryRepo';
+import { findOrCreateDishForUser } from '@/data/dishHelpers';
+import { getAuthenticatedUserId } from '@/data/utils';
 import { logger } from '@/utils/logger';
 import {
   CreateFoodEntryResponse,
@@ -49,6 +51,8 @@ export default function ConfirmFoodEntryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showAddTriggerModal, setShowAddTriggerModal] = useState(false);
   const [selectedDishEventId, setSelectedDishEventId] = useState<string | null>(null);
+  const [isAddingDish, setIsAddingDish] = useState(false);
+  const [isDeletingDish, setIsDeletingDish] = useState<string | null>(null);
 
   // Initialize dish states with predicted triggers
   useEffect(() => {
@@ -158,6 +162,102 @@ export default function ConfirmFoodEntryScreen() {
     return result;
   };
 
+  const handleAddDish = async () => {
+    setIsAddingDish(true);
+    setError(null);
+
+    try {
+      const userId = await getAuthenticatedUserId();
+      const rawEntryId = response.entry_id;
+
+      // Find or create dish with a default name
+      const dish = await findOrCreateDishForUser({
+        userId,
+        dishNameSuggestion: 'New Dish',
+      });
+
+      // Create dish_event
+      const dishEvent = await createDishEvent({
+        userId,
+        dishId: dish.id,
+        predictedDishId: null,
+        rawEntryId,
+        confirmedByUser: false,
+        deletedAt: null,
+      });
+
+      // Create new DishWithTriggers object
+      const newDish: DishWithTriggers = {
+        dish_event_id: dishEvent.id,
+        dish_id: dish.id,
+        dish_name: dish.dishName,
+        predicted_triggers: [],
+      };
+
+      // Update state
+      setDishes((prev) => [...prev, newDish]);
+      setDishStates((prev) => {
+        const newStates = new Map(prev);
+        newStates.set(dishEvent.id, {
+          dishName: dish.dishName,
+          selectedTriggerIds: new Set(),
+        });
+        return newStates;
+      });
+
+      logger.info(FILENAME, 'handleAddDish', 'Dish added successfully', {
+        dishEventId: dishEvent.id,
+        dishId: dish.id,
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add dish';
+      setError(errorMessage);
+      logger.error(FILENAME, 'handleAddDish', 'Error adding dish', err);
+      console.error('Error adding dish:', err);
+    } finally {
+      setIsAddingDish(false);
+    }
+  };
+
+  const handleDeleteDish = async (dishEventId: string) => {
+    // Prevent deleting if it's the last dish
+    if (dishes.length <= 1) {
+      setError('Cannot delete the last dish. At least one dish is required.');
+      return;
+    }
+
+    setIsDeletingDish(dishEventId);
+    setError(null);
+
+    try {
+      // Soft delete in database
+      await updateDishEventDeletedAt(dishEventId, new Date());
+
+      // Remove from state
+      setDishes((prev) => prev.filter((dish) => dish.dish_event_id !== dishEventId));
+      setDishStates((prev) => {
+        const newStates = new Map(prev);
+        newStates.delete(dishEventId);
+        return newStates;
+      });
+
+      // Close trigger modal if it was open for this dish
+      if (selectedDishEventId === dishEventId) {
+        setShowAddTriggerModal(false);
+        setSelectedDishEventId(null);
+      }
+
+      logger.info(FILENAME, 'handleDeleteDish', 'Dish deleted successfully', { dishEventId });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete dish';
+      setError(errorMessage);
+      logger.error(FILENAME, 'handleDeleteDish', 'Error deleting dish', err);
+      console.error('Error deleting dish:', err);
+    } finally {
+      setIsDeletingDish(null);
+    }
+  };
+
   const handleConfirm = async () => {
     setIsConfirming(true);
     setError(null);
@@ -217,6 +317,17 @@ export default function ConfirmFoodEntryScreen() {
           Review the dishes and triggers, then confirm to log your meal.
         </Text>
 
+        <Button
+          mode="outlined"
+          onPress={handleAddDish}
+          icon="plus"
+          style={styles.addDishButton}
+          loading={isAddingDish}
+          disabled={isAddingDish}
+        >
+          Add Dish
+        </Button>
+
         {dishes.map((dish) => {
           const dishState = dishStates.get(dish.dish_event_id);
           if (!dishState) return null;
@@ -228,9 +339,22 @@ export default function ConfirmFoodEntryScreen() {
           return (
             <Card key={dish.dish_event_id} style={styles.dishCard}>
               <Card.Content>
-                <Text variant="titleMedium" style={styles.dishLabel}>
-                  Dish Name
-                </Text>
+                <View style={styles.dishHeader}>
+                  <Text variant="titleMedium" style={styles.dishLabel}>
+                    Dish Name
+                  </Text>
+                  <Button
+                    mode="text"
+                    onPress={() => handleDeleteDish(dish.dish_event_id)}
+                    icon="delete"
+                    compact
+                    loading={isDeletingDish === dish.dish_event_id}
+                    disabled={isDeletingDish === dish.dish_event_id}
+                    textColor={theme.colors.error}
+                  >
+                    Delete
+                  </Button>
+                </View>
                 <TextInput
                   value={dishState.dishName}
                   onChangeText={(text) => updateDishName(dish.dish_event_id, text)}
@@ -367,12 +491,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: theme.colors.textSecondary,
   },
+  addDishButton: {
+    marginBottom: theme.spacing.md,
+  },
   dishCard: {
     marginBottom: theme.spacing.md,
     backgroundColor: theme.colors.surface,
   },
-  dishLabel: {
+  dishHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: theme.spacing.xs,
+  },
+  dishLabel: {
     color: theme.colors.textHeading,
   },
   dishNameInput: {
@@ -409,7 +541,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
   },
   errorText: {
-    color: '#d32f2f',
+    color: theme.colors.error,
     marginTop: theme.spacing.sm,
     textAlign: 'center',
   },

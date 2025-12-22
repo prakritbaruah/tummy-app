@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { describe, expect, it, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
-import { createFoodEntry, confirmFoodEntry } from '@/data/foodEntryService';
+import { createFoodEntry, confirmFoodEntry, getFoodEntriesForUser } from '@/data/foodEntryService';
+import { updateDishEventDeletedAt } from '@/data/foodEntryRepo';
 import { supabase } from '@/lib/supabase';
 import * as openaiModule from '@/lib/openai';
 
@@ -980,6 +981,421 @@ describe('foodEntryFlow integration (test database)', () => {
 
         // Cleanup
         await cleanup(result.entry_id);
+      },
+      30000,
+    );
+
+    it(
+      'correctly handles adding and removing triggers for a new dish',
+      async () => {
+        // Create a food entry with a new dish
+        const createResult = await createFoodEntry({
+          raw_entry_text: 'Pasta Carbonara',
+        });
+
+        const dishEvent = createResult.dishes[0];
+        expect(dishEvent.dish_event_id).toBeDefined();
+        expect(dishEvent.dish_id).toBeDefined();
+
+        // Get all available trigger IDs
+        const triggerMap = await getTriggerIds([
+          'gluten',
+          'dairy',
+          'processed_meat',
+          'fructans'
+        ]);
+        const glutenId = triggerMap.get('gluten');
+        const dairyId = triggerMap.get('dairy');
+        const meatId = triggerMap.get('processed_meat');
+        const fructansId = triggerMap.get('fructans');
+
+        expect(glutenId).toBeDefined();
+        expect(dairyId).toBeDefined();
+        expect(meatId).toBeDefined();
+        expect(fructansId).toBeDefined();
+
+        // Simulate user adding triggers: start with predicted triggers, then add more
+        // Predicted triggers might be: ['gluten', 'dairy', 'processed_meat']
+        // User adds: ['fructans']
+        // User removes: ['processed_meat']
+        // Final confirmed triggers: ['gluten', 'dairy', 'fructans']
+
+        // Confirm with final set of triggers (after user modifications)
+        const finalTriggerIds = [glutenId!, dairyId!, fructansId!];
+        const confirmResult = await confirmFoodEntry(createResult.entry_id, {
+          confirmed_dishes: [
+            {
+              dish_event_id: dishEvent.dish_event_id,
+              dish_id: dishEvent.dish_id,
+              final_dish_name: 'Pasta Carbonara',
+              trigger_ids: finalTriggerIds,
+            },
+          ],
+        });
+
+        // Verify confirmation response
+        expect(confirmResult.entry_id).toBe(createResult.entry_id);
+        expect(confirmResult.dishes).toHaveLength(1);
+        expect(confirmResult.dishes[0].dish_name).toBe('Pasta Carbonara');
+        expect(confirmResult.dishes[0].triggers).toBeDefined();
+        expect(confirmResult.dishes[0].triggers?.length).toBe(3);
+
+        const confirmedTriggerNames = confirmResult.dishes[0].triggers?.map((t) => t.trigger_name) || [];
+        expect(confirmedTriggerNames).toContain('gluten');
+        expect(confirmedTriggerNames).toContain('dairy');
+        expect(confirmedTriggerNames).toContain('fructans');
+        expect(confirmedTriggerNames).not.toContain('processed_meat'); // Should not be in final set
+
+        // Verify dish_events table state
+        const { data: dishEventRow } = await adminClient
+          .from('dish_events')
+          .select('*')
+          .eq('id', dishEvent.dish_event_id)
+          .single();
+
+        expect(dishEventRow).toBeDefined();
+        expect(dishEventRow?.id).toBe(dishEvent.dish_event_id);
+        expect(dishEventRow?.dish_id).toBe(dishEvent.dish_id);
+        expect(dishEventRow?.raw_entry_id).toBe(createResult.entry_id);
+        expect(dishEventRow?.confirmed_by_user).toBe(true); // Should be confirmed
+        expect(dishEventRow?.deleted_at).toBeNull(); // Should not be deleted
+        expect(dishEventRow?.user_id).toBe(authenticatedUserId);
+
+        // Verify dish table state
+        const { data: dishRow } = await adminClient
+          .from('dish')
+          .select('*')
+          .eq('id', dishEvent.dish_id)
+          .single();
+
+        expect(dishRow).toBeDefined();
+        expect(dishRow?.id).toBe(dishEvent.dish_id);
+        expect(dishRow?.dish_name).toBe('Pasta Carbonara');
+        expect(dishRow?.normalized_dish_name).toBe('pasta carbonara');
+        expect(dishRow?.user_id).toBe(authenticatedUserId);
+
+        // Verify dish_triggers table - should only have the final confirmed triggers
+        const { data: dishTriggers } = await adminClient
+          .from('dish_triggers')
+          .select('*, triggers(trigger_name)')
+          .eq('dish_event_id', dishEvent.dish_event_id);
+
+        expect(dishTriggers).toBeDefined();
+        expect(dishTriggers?.length).toBe(3); // Only the 3confirmed triggers
+
+        const actualTriggerNames = dishTriggers?.map((dt: any) => dt.triggers.trigger_name) || [];
+        expect(actualTriggerNames).toContain('gluten');
+        expect(actualTriggerNames).toContain('dairy');
+        expect(actualTriggerNames).toContain('fructans');
+        expect(actualTriggerNames).not.toContain('processed_meat'); // Should not be present
+
+        // Verify each trigger has correct dish_id and dish_event_id
+        dishTriggers?.forEach((dt: any) => {
+          expect(dt.dish_id).toBe(dishEvent.dish_id);
+          expect(dt.dish_event_id).toBe(dishEvent.dish_event_id);
+          expect(dt.trigger_id).toBeDefined();
+        });
+
+        // Verify predicted_dish_triggers still exist (for historical record)
+        // but they should not affect the confirmed triggers
+        const { data: predictedTriggers } = await adminClient
+          .from('predicted_dish_triggers')
+          .select('*, triggers(trigger_name)')
+          .eq('dish_event_id', dishEvent.dish_event_id);
+
+        // Predicted triggers might exist, but confirmed triggers take precedence
+        expect(predictedTriggers).toBeDefined();
+        // The important thing is that dish_triggers has the correct final set
+
+        // Cleanup
+        await cleanup(createResult.entry_id);
+      },
+      30000,
+    );
+  });
+
+  /**
+   * Integration tests for deletedAt (soft delete) functionality
+   */
+  describe('deletedAt (soft delete) functionality', () => {
+    it(
+      'soft deletes a dish event and filters it from queries',
+      async () => {
+        // Create a food entry
+        const result = await createFoodEntry({
+          raw_entry_text: 'Pasta with marinara sauce',
+        });
+
+        expect(result.dishes).toHaveLength(1);
+        const dishEventId = result.dishes[0].dish_event_id;
+
+        // Verify dish event exists and is not deleted
+        const { data: dishEventBefore } = await adminClient
+          .from('dish_events')
+          .select('*')
+          .eq('id', dishEventId)
+          .single();
+
+        expect(dishEventBefore).toBeDefined();
+        expect(dishEventBefore?.deleted_at).toBeNull();
+
+        // Soft delete the dish event
+        await updateDishEventDeletedAt(dishEventId, new Date());
+
+        // Verify deleted_at is set
+        const { data: dishEventAfter } = await adminClient
+          .from('dish_events')
+          .select('*')
+          .eq('id', dishEventId)
+          .single();
+
+        expect(dishEventAfter).toBeDefined();
+        expect(dishEventAfter?.deleted_at).not.toBeNull();
+
+        // Verify it's filtered out from getDishEventsByRawFoodEntryId
+        const { data: dishEvents } = await adminClient
+          .from('dish_events')
+          .select('*')
+          .eq('raw_entry_id', result.entry_id)
+          .is('deleted_at', null);
+
+        expect(dishEvents).toHaveLength(0);
+
+        // Cleanup
+        await cleanup(result.entry_id);
+      },
+      30000,
+    );
+
+    it(
+      'filters deleted dishes from getFoodEntriesForUser',
+      async () => {
+        // Create and confirm a food entry
+        const createResult = await createFoodEntry({
+          raw_entry_text: 'Chocolate chip cookies',
+        });
+
+        await confirmFoodEntry(createResult.entry_id, {
+          confirmed_dishes: [
+            {
+              dish_event_id: createResult.dishes[0].dish_event_id,
+              dish_id: createResult.dishes[0].dish_id,
+              final_dish_name: createResult.dishes[0].dish_name,
+              trigger_ids: [],
+            },
+          ],
+        });
+
+        // Verify it appears in getFoodEntriesForUser
+        const entriesBefore = await getFoodEntriesForUser();
+        const foundBefore = entriesBefore.find((e) => e.dishEventId === createResult.dishes[0].dish_event_id);
+        expect(foundBefore).toBeDefined();
+
+        // Soft delete the dish event
+        await updateDishEventDeletedAt(createResult.dishes[0].dish_event_id, new Date());
+
+        // Verify it's filtered out from getFoodEntriesForUser
+        const entriesAfter = await getFoodEntriesForUser();
+        const foundAfter = entriesAfter.find((e) => e.dishEventId === createResult.dishes[0].dish_event_id);
+        expect(foundAfter).toBeUndefined();
+
+        // Cleanup
+        await cleanup(createResult.entry_id);
+      },
+      30000,
+    );
+
+    it(
+      'does not include deleted dishes when confirming food entry',
+      async () => {
+        // Create a food entry with multiple dishes
+        const result = await createFoodEntry({
+          raw_entry_text: 'Pizza and garlic bread',
+        });
+
+        expect(result.dishes.length).toBeGreaterThanOrEqual(1);
+
+        // Soft delete one dish
+        const dishToDelete = result.dishes[0];
+        await updateDishEventDeletedAt(dishToDelete.dish_event_id, new Date());
+
+        // Get dish events - should exclude deleted one
+        const { data: activeDishEvents } = await adminClient
+          .from('dish_events')
+          .select('*')
+          .eq('raw_entry_id', result.entry_id)
+          .is('deleted_at', null);
+
+        expect(activeDishEvents?.length).toBeLessThan(result.dishes.length);
+
+        // Confirm only active dishes
+        const activeDishes = result.dishes.filter(
+          (d) => d.dish_event_id !== dishToDelete.dish_event_id,
+        );
+
+        if (activeDishes.length > 0) {
+          await confirmFoodEntry(result.entry_id, {
+            confirmed_dishes: activeDishes.map((d) => ({
+              dish_event_id: d.dish_event_id,
+              dish_id: d.dish_id,
+              final_dish_name: d.dish_name,
+              trigger_ids: [],
+            })),
+          });
+
+          // Verify deleted dish was not confirmed
+          const { data: deletedDishEvent } = await adminClient
+            .from('dish_events')
+            .select('confirmed_by_user, deleted_at')
+            .eq('id', dishToDelete.dish_event_id)
+            .single();
+
+          expect(deletedDishEvent?.deleted_at).not.toBeNull();
+          // Deleted dish should remain unconfirmed
+          expect(deletedDishEvent?.confirmed_by_user).toBe(false);
+        }
+
+        // Cleanup
+        await cleanup(result.entry_id);
+      },
+      30000,
+    );
+  });
+
+  /**
+   * Integration tests for confirmed_by_user functionality
+   */
+  describe('confirmed_by_user functionality', () => {
+    it(
+      'marks dish events as confirmed after confirmation',
+      async () => {
+        // Create a food entry
+        const result = await createFoodEntry({
+          raw_entry_text: 'Caesar salad',
+        });
+
+        // Verify dish events are not confirmed initially
+        const { data: dishEventsBefore } = await adminClient
+          .from('dish_events')
+          .select('confirmed_by_user')
+          .eq('raw_entry_id', result.entry_id);
+
+        expect(dishEventsBefore).toBeDefined();
+        dishEventsBefore?.forEach((de) => {
+          expect(de.confirmed_by_user).toBe(false);
+        });
+
+        // Confirm the food entry
+        await confirmFoodEntry(result.entry_id, {
+          confirmed_dishes: result.dishes.map((d) => ({
+            dish_event_id: d.dish_event_id,
+            dish_id: d.dish_id,
+            final_dish_name: d.dish_name,
+            trigger_ids: [],
+          })),
+        });
+
+        // Verify all dish events are now confirmed
+        const { data: dishEventsAfter } = await adminClient
+          .from('dish_events')
+          .select('confirmed_by_user')
+          .eq('raw_entry_id', result.entry_id);
+
+        expect(dishEventsAfter).toBeDefined();
+        dishEventsAfter?.forEach((de) => {
+          expect(de.confirmed_by_user).toBe(true);
+        });
+
+        // Cleanup
+        await cleanup(result.entry_id);
+      },
+      30000,
+    );
+
+    it(
+      'only returns confirmed dishes in getFoodEntriesForUser',
+      async () => {
+        // Create a food entry
+        const result = await createFoodEntry({
+          raw_entry_text: 'Fish and chips',
+        });
+
+        // Verify it doesn't appear before confirmation
+        const entriesBefore = await getFoodEntriesForUser();
+        const foundBefore = entriesBefore.find((e) => e.dishEventId === result.dishes[0].dish_event_id);
+        expect(foundBefore).toBeUndefined();
+
+        // Confirm the food entry
+        await confirmFoodEntry(result.entry_id, {
+          confirmed_dishes: result.dishes.map((d) => ({
+            dish_event_id: d.dish_event_id,
+            dish_id: d.dish_id,
+            final_dish_name: d.dish_name,
+            trigger_ids: [],
+          })),
+        });
+
+        // Verify it appears after confirmation
+        const entriesAfter = await getFoodEntriesForUser();
+        const foundAfter = entriesAfter.find((e) => e.dishEventId === result.dishes[0].dish_event_id);
+        expect(foundAfter).toBeDefined();
+        expect(foundAfter?.dishName).toBe(result.dishes[0].dish_name);
+
+        // Cleanup
+        await cleanup(result.entry_id);
+      },
+      30000,
+    );
+
+    it(
+      'combines confirmed_by_user and deleted_at filters correctly',
+      async () => {
+        // Create and confirm multiple food entries
+        const result1 = await createFoodEntry({
+          raw_entry_text: 'Burger and fries',
+        });
+
+        const result2 = await createFoodEntry({
+          raw_entry_text: 'Ice cream sundae',
+        });
+
+        // Confirm both
+        await confirmFoodEntry(result1.entry_id, {
+          confirmed_dishes: result1.dishes.map((d) => ({
+            dish_event_id: d.dish_event_id,
+            dish_id: d.dish_id,
+            final_dish_name: d.dish_name,
+            trigger_ids: [],
+          })),
+        });
+
+        await confirmFoodEntry(result2.entry_id, {
+          confirmed_dishes: result2.dishes.map((d) => ({
+            dish_event_id: d.dish_event_id,
+            dish_id: d.dish_id,
+            final_dish_name: d.dish_name,
+            trigger_ids: [],
+          })),
+        });
+
+        // Verify both appear
+        const entriesBefore = await getFoodEntriesForUser();
+        expect(entriesBefore.length).toBeGreaterThanOrEqual(2);
+
+        // Soft delete one
+        await updateDishEventDeletedAt(result1.dishes[0].dish_event_id, new Date());
+
+        // Verify only the non-deleted, confirmed one appears
+        const entriesAfter = await getFoodEntriesForUser();
+        const foundDeleted = entriesAfter.find((e) => e.dishEventId === result1.dishes[0].dish_event_id);
+        const foundActive = entriesAfter.find((e) => e.dishEventId === result2.dishes[0].dish_event_id);
+
+        expect(foundDeleted).toBeUndefined();
+        expect(foundActive).toBeDefined();
+
+        // Cleanup
+        await cleanup(result1.entry_id);
+        await cleanup(result2.entry_id);
       },
       30000,
     );

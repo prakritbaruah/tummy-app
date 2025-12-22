@@ -187,6 +187,7 @@ describe('mappers', () => {
       predictedDishId: 'pd1',
       rawEntryId: 'rf1',
       confirmedByUser: false,
+      deletedAt: null,
     };
 
     const row = toDishEventRow(entry);
@@ -217,6 +218,7 @@ describe('mappers', () => {
       predictedDishId: null,
       rawEntryId: 'rf1',
       confirmedByUser: false,
+      deletedAt: null,
     };
 
     const row = toDishEventRow(entry);

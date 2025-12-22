@@ -7,7 +7,7 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { confirmFoodEntry, createFoodEntry } from '@/data/foodEntryService';
+import { confirmFoodEntry, createFoodEntry, getFoodEntriesForUser } from '@/data/foodEntryService';
 import * as dishHelpers from '@/data/dishHelpers';
 import * as foodEntryRepo from '@/data/foodEntryRepo';
 import * as llmService from '@/data/llmService';
@@ -97,6 +97,15 @@ describe('foodEntryService', () => {
 
       // Step 3d: Mock dish event creation
       vi.spyOn(foodEntryRepo, 'createDishEvent').mockResolvedValue({
+        id: 'dish-event-1',
+        userId: mockUser.id,
+        dishId: 'dish-1',
+        predictedDishId: 'predicted-dish-1',
+        rawEntryId: 'raw-entry-1',
+        confirmedByUser: false,
+        deletedAt: null,
+        createdAt: Date.now(),
+      });({
         id: 'dish-event-1',
         userId: mockUser.id,
         dishId: 'dish-1',
@@ -222,6 +231,7 @@ describe('foodEntryService', () => {
         predictedDishId: 'predicted-dish-1',
         rawEntryId: 'raw-entry-1',
         confirmedByUser: false,
+        deletedAt: null,
         createdAt: Date.now(),
       });
 
@@ -351,6 +361,7 @@ describe('foodEntryService', () => {
           predictedDishId: 'predicted-dish-1',
           rawEntryId: 'raw-entry-1',
           confirmedByUser: false,
+          deletedAt: null,
           createdAt: Date.now(),
         })
         .mockResolvedValueOnce({
@@ -360,6 +371,7 @@ describe('foodEntryService', () => {
           predictedDishId: 'predicted-dish-2',
           rawEntryId: 'raw-entry-1',
           confirmedByUser: false,
+          deletedAt: null,
           createdAt: Date.now(),
         });
 
@@ -445,6 +457,8 @@ describe('foodEntryService', () => {
         predicted_dish_id: 'predicted-dish-1',
         raw_entry_id: 'raw-entry-1',
         created_at: new Date().toISOString(),
+        confirmed_by_user: false,
+        deleted_at: null,
       };
 
       vi.spyOn(foodEntryRepo, 'getDishEventsByRawFoodEntryId').mockResolvedValue([
@@ -454,6 +468,8 @@ describe('foodEntryService', () => {
           dishId: 'dish-1',
           predictedDishId: 'predicted-dish-1',
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
+          deletedAt: null,
           createdAt: Date.now(),
         },
       ]);
@@ -516,6 +532,9 @@ describe('foodEntryService', () => {
         createdAt: Date.now(),
       });
 
+      // Mock updateDishEventConfirmation
+      vi.spyOn(foodEntryRepo, 'updateDishEventConfirmation').mockResolvedValue(undefined);
+
       const result = await confirmFoodEntry('raw-entry-1', {
         confirmed_dishes: [
           {
@@ -549,6 +568,8 @@ describe('foodEntryService', () => {
           dishId: 'dish-1',
           predictedDishId: 'predicted-dish-1',
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
+          deletedAt: null,
           createdAt: Date.now(),
         },
       ]);
@@ -588,6 +609,9 @@ describe('foodEntryService', () => {
 
       // Spy on updateDish to verify it's NOT called when name is unchanged
       const updateDishSpy = vi.spyOn(foodEntryRepo, 'updateDish');
+
+      // Mock updateDishEventConfirmation
+      vi.spyOn(foodEntryRepo, 'updateDishEventConfirmation').mockResolvedValue(undefined);
 
       const result = await confirmFoodEntry('raw-entry-1', {
         confirmed_dishes: [
@@ -636,6 +660,8 @@ describe('foodEntryService', () => {
           dishId: 'dish-1',
           predictedDishId: 'predicted-dish-1',
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
+          deletedAt: null,
           createdAt: Date.now(),
         },
       ]);
@@ -673,6 +699,8 @@ describe('foodEntryService', () => {
           dishId: 'dish-1',
           predictedDishId: 'predicted-dish-1',
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
+          deletedAt: null,
           createdAt: Date.now(),
         },
       ]);
@@ -721,6 +749,8 @@ describe('foodEntryService', () => {
           dishId: 'dish-1',
           predictedDishId: 'predicted-dish-1',
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
+          deletedAt: null,
           createdAt: Date.now(),
         },
       ]);
@@ -784,6 +814,8 @@ describe('foodEntryService', () => {
           dishId: 'dish-1',
           predictedDishId: 'predicted-dish-1',
           rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
+          deletedAt: null,
           createdAt: Date.now(),
         },
         {
@@ -793,6 +825,8 @@ describe('foodEntryService', () => {
           predictedDishId: 'predicted-dish-2',
           rawEntryId: 'raw-entry-1',
           createdAt: Date.now(),
+          confirmedByUser: false,
+          deletedAt: null,
         },
       ]);
 
@@ -873,6 +907,9 @@ describe('foodEntryService', () => {
           createdAt: Date.now(),
         });
 
+      // Mock updateDishEventConfirmation
+      vi.spyOn(foodEntryRepo, 'updateDishEventConfirmation').mockResolvedValue(undefined);
+
       const result = await confirmFoodEntry('raw-entry-1', {
         confirmed_dishes: [
           {
@@ -893,6 +930,142 @@ describe('foodEntryService', () => {
       expect(result.dishes).toHaveLength(2);
       expect(result.dishes[0].dish_name).toBe('Chocolate Croissant');
       expect(result.dishes[1].dish_name).toBe('Matcha Latte');
+    });
+  });
+
+  /**
+   * Tests for getFoodEntriesForUser - fetches confirmed, non-deleted dish events for daily log
+   */
+  describe('getFoodEntriesForUser', () => {
+    it('returns only confirmed, non-deleted dish events', async () => {
+      mockAuth();
+      vi.spyOn(utils, 'getAuthenticatedUserId').mockResolvedValue(mockUser.id);
+
+      // Note: Results are ordered by created_at DESC, so most recent comes first
+      const dishEventsData = [
+        {
+          id: 'dish-event-2',
+          created_at: new Date('2024-01-02T10:00:00Z').toISOString(),
+          dish: {
+            id: 'dish-2',
+            dish_name: 'Matcha Latte',
+          },
+        },
+        {
+          id: 'dish-event-1',
+          created_at: new Date('2024-01-01T10:00:00Z').toISOString(),
+          dish: {
+            id: 'dish-1',
+            dish_name: 'Chocolate Croissant',
+          },
+        },
+      ];
+
+      // Mock Supabase query chain with filters for confirmed_by_user and deleted_at
+      const order = vi.fn().mockReturnValue(Promise.resolve({ data: dishEventsData, error: null }));
+      const is = vi.fn().mockReturnValue({ order });
+      const eqConfirmed = vi.fn().mockReturnValue({ is });
+      const eqUser = vi.fn().mockReturnValue({ eq: eqConfirmed });
+      const select = vi.fn().mockReturnValue({ eq: eqUser });
+      (supabase as any).from = vi.fn().mockReturnValue({ select });
+
+      const result = await getFoodEntriesForUser();
+
+      // Verify filters were applied correctly
+      expect(eqUser).toHaveBeenCalledWith('user_id', mockUser.id);
+      expect(eqConfirmed).toHaveBeenCalledWith('confirmed_by_user', true);
+      expect(is).toHaveBeenCalledWith('deleted_at', null);
+      expect(order).toHaveBeenCalledWith('created_at', { ascending: false });
+
+      // Verify results
+      expect(result).toHaveLength(2);
+      expect(result[0].dishEventId).toBe('dish-event-2'); // Most recent first
+      expect(result[0].dishName).toBe('Matcha Latte');
+      expect(result[1].dishEventId).toBe('dish-event-1');
+      expect(result[1].dishName).toBe('Chocolate Croissant');
+    });
+
+    it('filters out deleted dish events', async () => {
+      mockAuth();
+      vi.spyOn(utils, 'getAuthenticatedUserId').mockResolvedValue(mockUser.id);
+
+      // Only one non-deleted dish event should be returned
+      const dishEventsData = [
+        {
+          id: 'dish-event-1',
+          created_at: new Date('2024-01-01T10:00:00Z').toISOString(),
+          dish: {
+            id: 'dish-1',
+            dish_name: 'Chocolate Croissant',
+          },
+        },
+      ];
+
+      const order = vi.fn().mockReturnValue(Promise.resolve({ data: dishEventsData, error: null }));
+      const is = vi.fn().mockReturnValue({ order });
+      const eqConfirmed = vi.fn().mockReturnValue({ is });
+      const eqUser = vi.fn().mockReturnValue({ eq: eqConfirmed });
+      const select = vi.fn().mockReturnValue({ eq: eqUser });
+      (supabase as any).from = vi.fn().mockReturnValue({ select });
+
+      const result = await getFoodEntriesForUser();
+
+      // Verify deleted_at filter was applied
+      expect(is).toHaveBeenCalledWith('deleted_at', null);
+      expect(result).toHaveLength(1);
+      expect(result[0].dishEventId).toBe('dish-event-1');
+    });
+
+    it('filters out unconfirmed dish events', async () => {
+      mockAuth();
+      vi.spyOn(utils, 'getAuthenticatedUserId').mockResolvedValue(mockUser.id);
+
+      const dishEventsData: any[] = []; // Empty because unconfirmed events are filtered
+
+      const order = vi.fn().mockReturnValue(Promise.resolve({ data: dishEventsData, error: null }));
+      const is = vi.fn().mockReturnValue({ order });
+      const eqConfirmed = vi.fn().mockReturnValue({ is });
+      const eqUser = vi.fn().mockReturnValue({ eq: eqConfirmed });
+      const select = vi.fn().mockReturnValue({ eq: eqUser });
+      (supabase as any).from = vi.fn().mockReturnValue({ select });
+
+      const result = await getFoodEntriesForUser();
+
+      // Verify confirmed_by_user filter was applied
+      expect(eqConfirmed).toHaveBeenCalledWith('confirmed_by_user', true);
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array when no dish events found', async () => {
+      mockAuth();
+      vi.spyOn(utils, 'getAuthenticatedUserId').mockResolvedValue(mockUser.id);
+
+      const order = vi.fn().mockReturnValue(Promise.resolve({ data: null, error: null }));
+      const is = vi.fn().mockReturnValue({ order });
+      const eqConfirmed = vi.fn().mockReturnValue({ is });
+      const eqUser = vi.fn().mockReturnValue({ eq: eqConfirmed });
+      const select = vi.fn().mockReturnValue({ eq: eqUser });
+      (supabase as any).from = vi.fn().mockReturnValue({ select });
+
+      const result = await getFoodEntriesForUser();
+
+      expect(result).toEqual([]);
+    });
+
+    it('throws error when query fails', async () => {
+      mockAuth();
+      vi.spyOn(utils, 'getAuthenticatedUserId').mockResolvedValue(mockUser.id);
+
+      const order = vi.fn().mockReturnValue(
+        Promise.resolve({ data: null, error: { message: 'query failed' } }),
+      );
+      const is = vi.fn().mockReturnValue({ order });
+      const eqConfirmed = vi.fn().mockReturnValue({ is });
+      const eqUser = vi.fn().mockReturnValue({ eq: eqConfirmed });
+      const select = vi.fn().mockReturnValue({ eq: eqUser });
+      (supabase as any).from = vi.fn().mockReturnValue({ select });
+
+      await expect(getFoodEntriesForUser()).rejects.toThrow('query failed');
     });
   });
 });

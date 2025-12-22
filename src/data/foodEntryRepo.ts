@@ -301,6 +301,7 @@ export async function getDishEventsByRawFoodEntryId(rawEntryId: string): Promise
     .from('dish_events')
     .select('*')
     .eq('raw_entry_id', rawEntryId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -367,4 +368,27 @@ export async function updateDishEventConfirmation(
   if (error) {
     handleError(error);
   }
+}
+
+// Update dish event deleted_at timestamp (soft delete)
+export async function updateDishEventDeletedAt(
+  dishEventId: string,
+  deletedAt: Date
+): Promise<DishEvent> {
+  const { data, error } = await supabase
+    .from('dish_events')
+    .update({ deleted_at: deletedAt.toISOString() })
+    .eq('id', dishEventId)
+    .select()
+    .single();
+
+  if (error) {
+    handleError(error);
+  }
+
+  if (!data) {
+    throw new Error('Failed to update dish event deleted_at');
+  }
+
+  return fromDishEventRow(data as DishEventRow);
 }

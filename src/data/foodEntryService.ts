@@ -97,6 +97,7 @@ export async function createFoodEntry(
       predictedDishId: predictedDish.id,
       rawEntryId: rawEntry.id,
       confirmedByUser: false,
+      deletedAt: null,
     });
     logger.info(FILENAME, 'createFoodEntry', 'Dish event created', { dishEventId: dishEvent.id, dishId: dish.id });
 
@@ -395,6 +396,7 @@ export async function getFoodEntriesForUser(): Promise<Array<{
     `)
     .eq('user_id', userId)
     .eq('confirmed_by_user', true)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   if (dishEventsError) {
