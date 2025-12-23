@@ -211,7 +211,7 @@ export default function DailyLogScreen() {
             <Card key={dayEntry.date} style={styles.dayCard}>
               <Card.Content>
                 <Text variant="headlineSmall" style={styles.dateHeader}>
-                  {formatDate(dayEntry.date)}
+                  {formatDate(dayEntry.dateObj)}
                 </Text>
                 <Text variant="bodyMedium" style={styles.dateSubheader}>
                   {dayEntry.date}

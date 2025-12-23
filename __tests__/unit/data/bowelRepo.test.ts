@@ -76,7 +76,6 @@ describe('bowelRepo', () => {
   });
 
   it('creates an entry and returns mapped data', async () => {
-    mockAuth();
     const entry: BowelEntry = {
       id: 'b2',
       occurredAt: 1710000000000,
@@ -96,7 +95,7 @@ describe('bowelRepo', () => {
       blood_present: entry.bloodPresent,
       notes: null,
       created_at: new Date().toISOString(),
-      deleted_at: new Date().toISOString(),
+      deleted_at: null,
     };
     const { insert } = mockInsertChain(row);
 
