@@ -1,5 +1,3 @@
-// TODO: add updated_at and deleted_at columns
-
 export interface BowelEntryRow {
   id: string;
   user_id: string;
@@ -9,6 +7,7 @@ export interface BowelEntryRow {
   mucus_present: boolean;
   blood_present: boolean;
   notes: string | null;
+  deleted_at: string | null;
   created_at: string;
 }
 
@@ -19,6 +18,7 @@ export interface SymptomEntryRow {
   symptom: string;
   intensity: string;
   notes: string | null;
+  deleted_at: string | null;
   created_at: string;
 }
 

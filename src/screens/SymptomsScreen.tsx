@@ -63,6 +63,7 @@ export default function SymptomsScreen() {
           ...input,
           id: Date.now().toString() + input.name,
           occurredAt: selectedTime.getTime(),
+          deletedAt: null,
         };
         return dispatch(addSymptomEntryAsync(newEntry)).unwrap();
       }),
@@ -164,6 +165,12 @@ export default function SymptomsScreen() {
         </Card>
       ))}
 
+      {error && (
+        <HelperText type="error" visible style={styles.errorText}>
+          {error}
+        </HelperText>
+      )}
+
       {symptomInputs.length > 0 && (
         <Button 
           mode="contained" 
@@ -174,12 +181,6 @@ export default function SymptomsScreen() {
         >
           Add Symptoms
         </Button>
-      )}
-
-      {error && (
-        <HelperText type="error" visible>
-          {error}
-        </HelperText>
       )}
     </ScrollView>
   );
@@ -245,5 +246,10 @@ const styles = StyleSheet.create({
   addAllButton: {
     marginTop: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
+  },
+  errorText: {
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.error,
   },
 });

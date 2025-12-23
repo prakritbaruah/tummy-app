@@ -10,4 +10,5 @@ export type Timestamp = number;
 export interface BaseEntry {
   id: string;
   occurredAt: Timestamp;
+  deletedAt: Timestamp | null;
 }

@@ -28,6 +28,7 @@ export default function BowelScreen() {
       mucusPresent,
       bloodPresent,
       occurredAt: selectedTime.getTime(),
+      deletedAt: null,
     };
     try {
       await dispatch(addBowelEntryAsync(newEntry)).unwrap();
@@ -130,7 +131,7 @@ export default function BowelScreen() {
       </View>
 
       {error && (
-        <HelperText type="error" visible>
+        <HelperText type="error" visible style={styles.errorText}>
           {error}
         </HelperText>
       )}
@@ -193,5 +194,10 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: theme.spacing.sm,
+  },
+  errorText: {
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.error,
   },
 });

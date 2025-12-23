@@ -20,11 +20,11 @@ const mockAuth = () => {
 };
 
 const mockListChain = (rows: BowelEntryRow[] | null, error: Error | null = null) => {
-  const order = vi.fn().mockReturnValue(Promise.resolve({ data: rows, error }));
-  const eq = vi.fn().mockReturnValue({ order });
-  const select = vi.fn().mockReturnValue({ eq, order });
+  const order = vi.fn().mockResolvedValue({ data: rows, error });
+  const is = vi.fn().mockReturnValue({ order });
+  const select = vi.fn().mockReturnValue({ is });
   (supabase as any).from = vi.fn().mockReturnValue({ select });
-  return { order, eq, select };
+  return { order, is, select };
 };
 
 const mockInsertChain = (row: BowelEntryRow | null, error: Error | null = null) => {
@@ -54,12 +54,14 @@ describe('bowelRepo', () => {
       blood_present: false,
       notes: null,
       created_at: new Date().toISOString(),
+      deleted_at: null,
     };
-    const { order } = mockListChain([row]);
+    const { is, order } = mockListChain([row]);
 
     const entries = await listBowelEntries();
 
     expect(order).toHaveBeenCalledWith('occurred_at', { ascending: false });
+    expect(is).toHaveBeenCalledWith('deleted_at', null);
     expect(entries[0]).toMatchObject({
       id: 'b1',
       urgency: 'Medium',
@@ -82,6 +84,7 @@ describe('bowelRepo', () => {
       consistency: 5,
       mucusPresent: true,
       bloodPresent: false,
+      deletedAt: null,
     };
     const row: BowelEntryRow = {
       id: entry.id,
@@ -93,6 +96,7 @@ describe('bowelRepo', () => {
       blood_present: entry.bloodPresent,
       notes: null,
       created_at: new Date().toISOString(),
+      deleted_at: new Date().toISOString(),
     };
     const { insert } = mockInsertChain(row);
 
@@ -115,6 +119,7 @@ describe('bowelRepo', () => {
       consistency: 3,
       mucusPresent: false,
       bloodPresent: false,
+      deletedAt: null,
     };
     await expect(createBowelEntry(entry)).rejects.toThrow('insert failed');
   });

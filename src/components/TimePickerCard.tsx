@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, Text as RNText, Platform, View } from 're
 import { Text, Card } from 'react-native-paper';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { theme } from '@/styles';
+import { formatTime, formatDate } from '@/utils/dateTime';
 
 interface DateTimePickerCardProps {
   value: Date;
@@ -37,23 +38,6 @@ export default function TimePickerCard({ value, onChange }: DateTimePickerCardPr
     }
   };
 
-  const formatDate = (date: Date): string => {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    }
-    return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-  };
-
-  const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
   return (
     <Card style={styles.card}>
       {/* Date Row */}
@@ -66,7 +50,7 @@ export default function TimePickerCard({ value, onChange }: DateTimePickerCardPr
       >
         <Card.Content style={styles.rowHeader}>
           <Text variant="titleMedium" style={styles.label}>Date</Text>
-          <RNText style={styles.valueText}>{formatDate(value)}</RNText>
+          <RNText style={styles.valueText}>{formatDate(value, 'short')}</RNText>
         </Card.Content>
       </TouchableOpacity>
       {showDatePicker && (

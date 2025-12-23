@@ -1,13 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, Card, Divider, SegmentedButtons } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { SymptomEntry } from '@/types/symptoms';
 import { BowelEntry } from '@/types/bowel';
 import { theme } from '@/styles';
-import { fetchSymptomEntries } from '@/store/symptomsSlice';
-import { fetchBowelEntries } from '@/store/bowelSlice';
+import { fetchSymptomEntries, deleteSymptomEntryAsync } from '@/store/symptomsSlice';
+import { fetchBowelEntries, deleteBowelEntryAsync } from '@/store/bowelSlice';
 import { getFoodEntriesForUser } from '@/data/foodEntryService';
+import { updateDishEventDeletedAt } from '@/data/foodEntryRepo';
+import {
+  MealDetailModal,
+  SymptomDetailModal,
+  BowelDetailModal,
+} from '@/components';
+import { formatTime, formatDate } from '@/utils/dateTime';
 
 interface DayEntry {
   date: string;
@@ -27,6 +34,15 @@ export default function DailyLogScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>('today');
   const [foodEntries, setFoodEntries] = useState<Awaited<ReturnType<typeof getFoodEntriesForUser>>>([]);
   const [isLoadingFood, setIsLoadingFood] = useState(true);
+  
+  // Modal states
+  const [selectedMeal, setSelectedMeal] = useState<{
+    dishEventId: string;
+    dishName: string;
+    occurredAt: number;
+  } | null>(null);
+  const [selectedSymptom, setSelectedSymptom] = useState<SymptomEntry | null>(null);
+  const [selectedBowel, setSelectedBowel] = useState<BowelEntry | null>(null);
   
   const dispatch = useAppDispatch();
   const symptomEntries = useAppSelector((state) => state.symptoms.entries);
@@ -131,30 +147,39 @@ export default function DailyLogScreen() {
     }
   }, [symptomEntries, bowelEntries, foodEntries, viewMode]);
 
-  // TODO: move to helper functions in util folder
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+  const handleDeleteMeal = async () => {
+    if (!selectedMeal) return;
+    
+    try {
+      await updateDishEventDeletedAt(selectedMeal.dishEventId, new Date());
+      // Refresh food entries
+      const entries = await getFoodEntriesForUser();
+      setFoodEntries(entries);
+      setSelectedMeal(null);
+    } catch (error) {
+      console.error('Error deleting meal:', error);
+    }
   };
 
-  // TODO: move to helper functions in util folder
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  const handleDeleteSymptom = async () => {
+    if (!selectedSymptom) return;
     
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return date.toLocaleDateString([], { 
-        weekday: 'long', 
-        month: 'short', 
-        day: 'numeric' 
-      });
+    try {
+      await dispatch(deleteSymptomEntryAsync(selectedSymptom.id)).unwrap();
+      setSelectedSymptom(null);
+    } catch (error) {
+      console.error('Error deleting symptom:', error);
+    }
+  };
+
+  const handleDeleteBowel = async () => {
+    if (!selectedBowel) return;
+    
+    try {
+      await dispatch(deleteBowelEntryAsync(selectedBowel.id)).unwrap();
+      setSelectedBowel(null);
+    } catch (error) {
+      console.error('Error deleting bowel entry:', error);
     }
   };
 
@@ -206,7 +231,24 @@ export default function DailyLogScreen() {
                   ].sort((a, b) => b.occurredAt - a.occurredAt);
 
                   return allDayEntries.map((entry, index) => (
-                    <View key={`${entry.type}-${entry.type === 'food' ? entry.dishEventId : entry.id}`} style={styles.entryItem}>
+                    <TouchableOpacity
+                      key={`${entry.type}-${entry.type === 'food' ? entry.dishEventId : entry.id}`}
+                      style={styles.entryItem}
+                      onPress={() => {
+                        if (entry.type === 'food') {
+                          setSelectedMeal({
+                            dishEventId: entry.dishEventId,
+                            dishName: entry.dishName,
+                            occurredAt: entry.occurredAt,
+                          });
+                        } else if (entry.type === 'symptom') {
+                          setSelectedSymptom(entry as SymptomEntry);
+                        } else if (entry.type === 'bowel') {
+                          setSelectedBowel(entry as BowelEntry);
+                        }
+                      }}
+                      activeOpacity={0.7}
+                    >
                       <View style={styles.entryRow}>
                         <Text variant="bodySmall" style={styles.entryTime}>
                           {formatTime(entry.occurredAt)}
@@ -229,7 +271,7 @@ export default function DailyLogScreen() {
                           </Text>
                         )}
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   ));
                 })()}
 
@@ -247,6 +289,30 @@ export default function DailyLogScreen() {
           ))
         )}
       </ScrollView>
+
+      {/* Detail Modals */}
+      <MealDetailModal
+        visible={selectedMeal !== null}
+        onDismiss={() => setSelectedMeal(null)}
+        dishEventId={selectedMeal?.dishEventId || ''}
+        dishName={selectedMeal?.dishName || ''}
+        occurredAt={selectedMeal?.occurredAt || 0}
+        onDelete={handleDeleteMeal}
+      />
+
+      <SymptomDetailModal
+        visible={selectedSymptom !== null}
+        onDismiss={() => setSelectedSymptom(null)}
+        entry={selectedSymptom}
+        onDelete={handleDeleteSymptom}
+      />
+
+      <BowelDetailModal
+        visible={selectedBowel !== null}
+        onDismiss={() => setSelectedBowel(null)}
+        entry={selectedBowel}
+        onDelete={handleDeleteBowel}
+      />
     </View>
   );
 }

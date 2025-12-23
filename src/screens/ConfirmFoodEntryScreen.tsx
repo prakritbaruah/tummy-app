@@ -394,7 +394,7 @@ export default function ConfirmFoodEntryScreen() {
                           onClose={() => removeTrigger(dish.dish_event_id, trigger.id)}
                           mode="flat"
                         >
-                          {trigger.triggerName}
+                          {getTriggerDisplayText(trigger.triggerName)}
                         </Chip>
                       ))}
                     </View>
@@ -572,4 +572,3 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
 });
-

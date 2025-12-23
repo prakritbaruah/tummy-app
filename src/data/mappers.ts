@@ -37,6 +37,8 @@ export function toBowelRow(
     mucus_present: entry.mucusPresent,
     blood_present: entry.bloodPresent,
     notes: null,
+    // Treat both null and undefined as "not deleted"
+    deleted_at: entry.deletedAt != null ? new Date(entry.deletedAt).toISOString() : null,
   };
 }
 
@@ -48,6 +50,7 @@ export function fromBowelRow(row: BowelEntryRow): BowelEntry {
     consistency: row.consistency,
     mucusPresent: row.mucus_present,
     bloodPresent: row.blood_present,
+    deletedAt: row.deleted_at != null ? new Date(row.deleted_at).getTime() : null,
   };
 }
 
@@ -62,6 +65,7 @@ export function toSymptomRow(
     symptom: entry.name,
     intensity: entry.severity,
     notes: null,
+    deleted_at: entry.deletedAt != null ? new Date(entry.deletedAt).toISOString() : null,
   };
 }
 
@@ -71,6 +75,7 @@ export function fromSymptomRow(row: SymptomEntryRow): SymptomEntry {
     occurredAt: new Date(row.occurred_at).getTime(),
     name: row.symptom as SymptomEntry['name'],
     severity: row.intensity as Severity,
+    deletedAt: row.deleted_at != null ? new Date(row.deleted_at).getTime() : null,
   };
 }
 
@@ -149,7 +154,7 @@ export function toDishEventRow(
     predicted_dish_id: entry.predictedDishId,
     raw_entry_id: entry.rawEntryId,
     confirmed_by_user: entry.confirmedByUser,
-    deleted_at: entry.deletedAt !== null ? new Date(entry.deletedAt).toISOString() : null,
+    deleted_at: entry.deletedAt != null ? new Date(entry.deletedAt).toISOString() : null,
   };
 }
 

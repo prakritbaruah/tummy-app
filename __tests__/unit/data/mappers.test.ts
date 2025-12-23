@@ -40,6 +40,7 @@ describe('mappers', () => {
       consistency: 4,
       mucusPresent: true,
       bloodPresent: false,
+      deletedAt: null,
     };
 
     const row = toBowelRow(entry, 'user-123');
@@ -60,6 +61,7 @@ describe('mappers', () => {
       occurredAt: 1710000000000,
       name: 'Bloating',
       severity: 'High',
+      deletedAt: null,
     };
 
     const row = toSymptomRow(entry, 'user-123');

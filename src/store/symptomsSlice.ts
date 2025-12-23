@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { SymptomEntry, SymptomsState } from '@/types/symptoms';
-import { createSymptomEntry, listSymptomEntries } from '@/data/symptomsRepo';
+import { createSymptomEntry, listSymptomEntries, updateSymptomEntryDeletedAt } from '@/data/symptomsRepo';
 
 const initialState: SymptomsState = {
   entries: [],
@@ -28,6 +28,18 @@ export const addSymptomEntryAsync = createAsyncThunk(
       return await createSymptomEntry(entry);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to save symptom');
+    }
+  },
+);
+
+export const deleteSymptomEntryAsync = createAsyncThunk(
+  'symptoms/delete',
+  async (entryId: string, { rejectWithValue }) => {
+    try {
+      await updateSymptomEntryDeletedAt(entryId, new Date());
+      return entryId;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to delete symptom entry');
     }
   },
 );
@@ -67,6 +79,17 @@ const symptomsSlice = createSlice({
       .addCase(addSymptomEntryAsync.rejected, (state, action) => {
         state.status = 'error';
         state.error = (action.payload as string) ?? 'Unable to save symptom entry';
+      })
+      .addCase(deleteSymptomEntryAsync.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(deleteSymptomEntryAsync.fulfilled, (state, action: PayloadAction<string>) => {
+        state.status = 'idle';
+        state.entries = state.entries.filter((entry) => entry.id !== action.payload);
+      })
+      .addCase(deleteSymptomEntryAsync.rejected, (state, action) => {
+        state.status = 'error';
+        state.error = (action.payload as string) ?? 'Unable to delete symptom entry';
       });
   },
 });

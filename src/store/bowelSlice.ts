@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { BowelEntry, BowelState } from '@/types/bowel';
-import { createBowelEntry, listBowelEntries } from '@/data/bowelRepo';
+import { createBowelEntry, listBowelEntries, updateBowelEntryDeletedAt } from '@/data/bowelRepo';
 
 const initialState: BowelState = {
   entries: [],
@@ -26,6 +26,18 @@ export const addBowelEntryAsync = createAsyncThunk(
       return await createBowelEntry(entry);
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to save bowel entry');
+    }
+  },
+);
+
+export const deleteBowelEntryAsync = createAsyncThunk(
+  'bowel/delete',
+  async (entryId: string, { rejectWithValue }) => {
+    try {
+      await updateBowelEntryDeletedAt(entryId, new Date());
+      return entryId;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to delete bowel entry');
     }
   },
 );
@@ -65,6 +77,17 @@ const bowelSlice = createSlice({
       .addCase(addBowelEntryAsync.rejected, (state, action) => {
         state.status = 'error';
         state.error = (action.payload as string) ?? 'Unable to save bowel movement entry';
+      })
+      .addCase(deleteBowelEntryAsync.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(deleteBowelEntryAsync.fulfilled, (state, action: PayloadAction<string>) => {
+        state.status = 'idle';
+        state.entries = state.entries.filter((entry) => entry.id !== action.payload);
+      })
+      .addCase(deleteBowelEntryAsync.rejected, (state, action) => {
+        state.status = 'error';
+        state.error = (action.payload as string) ?? 'Unable to delete bowel entry';
       });
   },
 });
