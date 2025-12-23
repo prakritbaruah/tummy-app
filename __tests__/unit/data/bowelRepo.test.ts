@@ -76,6 +76,7 @@ describe('bowelRepo', () => {
   });
 
   it('creates an entry and returns mapped data', async () => {
+    mockAuth();
     const entry: BowelEntry = {
       id: 'b2',
       occurredAt: 1710000000000,
