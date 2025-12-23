@@ -22,7 +22,7 @@ import {
   ConfirmedDish,
 } from '@/types/foodEntry';
 import { Trigger } from '@/types/dish';
-
+import { getTriggerDisplayText } from '@/data/trigger';
 const FILENAME = 'ConfirmFoodEntryScreen.tsx';
 
 type RootStackParamList = {
@@ -421,7 +421,7 @@ export default function ConfirmFoodEntryScreen() {
                               style={styles.triggerButton}
                               compact
                             >
-                              {trigger.triggerName}
+                              {getTriggerDisplayText(trigger.triggerName)}
                             </Button>
                           ))}
                         </View>

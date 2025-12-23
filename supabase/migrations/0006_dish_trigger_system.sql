@@ -173,28 +173,8 @@ create policy dish_triggers_owner_policy on public.dish_triggers
   );
 
 -- Seed initial triggers (only insert if they don't exist)
--- These must match VALID_TRIGGER_NAMES in src/data/trigger.ts
 insert into public.triggers (trigger_name)
-select unnest(array[
-  'alcohol',
-  'caffeine',
-  'dairy',
-  'spicy',
-  'fried_food',
-  'gluten',
-  'added_sugar',
-  'insoluble_fiber',
-  'fructans',
-  'legumes_beans',
-  'high_fructose_fruits',
-  'red_meat',
-  'processed_meat',
-  'sesame',
-  'shellfish',
-  'fish',
-  'soy',
-  'nuts'
-]::text[])
+select unnest(array['gluten', 'dairy', 'nuts', 'caffeine', 'sugar', 'red_meat']::text[])
 where not exists (select 1 from public.triggers);
 
 
