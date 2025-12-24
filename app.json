@@ -2,7 +2,7 @@
   "expo": {
     "name": "tummy",
     "slug": "tummy",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,7 +16,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.prakritbaruah.tummy",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "We need access to your camera to take photos of your meals for food logging and tracking."
       }
     },
     "android": {
