@@ -7,7 +7,7 @@ export const SYMPTOMS = [
   'Vomiting',
   'Gas',
   'Heartburn',
-  'Loss of Appeti2te',
+  'Loss of Appetite',
   'Fatigue',
 ] as const;
 
