@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, HelperText } from 'react-native-paper';
+import { Text, Button, HelperText, SegmentedButtons } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { addBowelEntryAsync } from '@/store/bowelSlice';
@@ -20,6 +20,7 @@ export default function BowelScreen() {
   const navigation = useNavigation();
   const status = useAppSelector((state) => state.bowel.status);
 
+
   const handleAddEntry = async () => {
     const newEntry: BowelEntry = {
       id: Date.now().toString(),
@@ -33,12 +34,6 @@ export default function BowelScreen() {
     try {
       await dispatch(addBowelEntryAsync(newEntry)).unwrap();
       setError(null);
-      // Reset form
-      setUrgency('Low');
-      setConsistency(4);
-      setSelectedTime(new Date());
-      setMucusPresent(false);
-      setBloodPresent(false);
 
       // Reset navigation to Daily Log tab (no overlay)
       (navigation as any).reset({
@@ -50,17 +45,6 @@ export default function BowelScreen() {
     }
   };
 
-  const getUrgencyValue = (urgency: Urgency): number => {
-    const urgencyLevels: Urgency[] = ['Low', 'Medium', 'High'];
-    return urgencyLevels.indexOf(urgency) / (urgencyLevels.length - 1);
-  };
-
-  const getUrgencyFromValue = (value: number): Urgency => {
-    const urgencyLevels: Urgency[] = ['Low', 'Medium', 'High'];
-    const index = Math.round(value * (urgencyLevels.length - 1));
-    return urgencyLevels[index];
-  };
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <Text variant="headlineMedium" style={styles.heading}>
@@ -70,27 +54,18 @@ export default function BowelScreen() {
       <TimePickerCard value={selectedTime} onChange={setSelectedTime} />
 
       <Text variant="titleMedium" style={styles.label}>Urgency</Text>
-      <View style={styles.sliderContainer}>
-        <View style={styles.sliderLabels}>
-          <Text variant="bodySmall">Low</Text>
-          <Text variant="bodySmall">High</Text>
-        </View>
-        <Slider
-          value={getUrgencyValue(urgency)}
-          onValueChange={(value) => setUrgency(getUrgencyFromValue(value))}
-          minimumValue={0}
-          maximumValue={1}
-          step={0.5}
-          style={styles.slider}
-          minimumTrackTintColor={theme.colors.primary}
-          maximumTrackTintColor={theme.colors.trackInactive}
-          thumbTintColor={theme.colors.primary}
-        />
-        <Text variant="bodyMedium" style={styles.currentValue}>
-          {urgency.charAt(0).toUpperCase() + urgency.slice(1)}
-        </Text>
-      </View>
+      <SegmentedButtons
+        value={urgency}
+        onValueChange={(value) => setUrgency(value as Urgency)}
+        buttons={[
+          { value: 'Low', label: 'Low' },
+          { value: 'Medium', label: 'Medium' },
+          { value: 'High', label: 'High' },
+        ]}
+        style={styles.segmentedButtons}
+      />
 
+ 
       <Text variant="titleMedium" style={styles.label}>Consistency</Text>
       <View style={styles.sliderContainer}>
         <View style={styles.sliderLabels}>
@@ -112,6 +87,7 @@ export default function BowelScreen() {
           Type {consistency}
         </Text>
       </View>
+      
 
       <View style={styles.checkboxContainer}>
         <Button
@@ -165,6 +141,9 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: theme.spacing.sm,
   },
+  segmentedButtons: {
+    marginBottom: theme.spacing.md,
+  },
   sliderContainer: {
     marginBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing.sm,
@@ -175,7 +154,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   slider: {
-    height: 40,
+    height: 40
   },
   currentValue: {
     textAlign: 'center',

@@ -60,7 +60,7 @@ describe('mappers', () => {
       id: 's1',
       occurredAt: 1710000000000,
       name: 'Bloating',
-      severity: 'High',
+      severity: 'Severe',
       deletedAt: null,
     };
 

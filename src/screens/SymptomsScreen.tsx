@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, Card, List, Checkbox, HelperText } from 'react-native-paper';
-import Slider from '@react-native-community/slider';
+import { Text, Button, Card, List, Checkbox, HelperText, SegmentedButtons } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { addSymptomEntryAsync } from '@/store/symptomsSlice';
 import { useNavigation } from '@react-navigation/native';
@@ -42,11 +41,7 @@ export default function SymptomsScreen() {
     });
   };
 
-  const handleSeverityChange = (symptom: string, value: number) => {
-    const severityLevels: Severity[] = ['Low', 'Mild', 'Moderate', 'High', 'Severe'];
-    const index = Math.round(value * (severityLevels.length - 1));
-    const severity = severityLevels[index];
-    
+  const handleSeverityChange = (symptom: string, severity: Severity) => {
     setSymptomInputs(inputs => 
       inputs.map(input => 
         input.name === symptom 
@@ -85,10 +80,6 @@ export default function SymptomsScreen() {
       });
   };
 
-  const getSeverityValue = (severity: Severity): number => {
-    const severityLevels: Severity[] = ['Low', 'Mild', 'Moderate', 'High', 'Severe'];
-    return severityLevels.indexOf(severity) / (severityLevels.length - 1);
-  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -141,26 +132,16 @@ export default function SymptomsScreen() {
             <Text variant="titleMedium" style={styles.symptomTitle}>{input.name}</Text>
 
             <Text variant="titleSmall" style={styles.label}>Severity</Text>
-            <View style={styles.sliderContainer}>
-              <View style={styles.sliderLabels}>
-                <Text variant="bodySmall">Low</Text>
-                <Text variant="bodySmall">Severe</Text>
-              </View>
-              <Slider
-                value={getSeverityValue(input.severity)}
-                onValueChange={(value: number) => handleSeverityChange(input.name, value)}
-                minimumValue={0}
-                maximumValue={1}
-                step={0.25}
-                style={styles.slider}
-                minimumTrackTintColor={theme.colors.primary}
-                maximumTrackTintColor={theme.colors.trackInactive}
-                thumbTintColor={theme.colors.primary}
-              />
-              <Text variant="bodyMedium" style={styles.currentSeverity}>
-                {input.severity.charAt(0).toUpperCase() + input.severity.slice(1)}
-              </Text>
-            </View>
+            <SegmentedButtons
+              value={input.severity}
+              onValueChange={(value) => handleSeverityChange(input.name, value as Severity)}
+              buttons={[
+                { value: 'Mild', label: 'Mild' },
+                { value: 'Moderate', label: 'Moderate' },
+                { value: 'Severe', label: 'Severe' },
+              ]}
+              style={styles.segmentedButtons}
+            />
           </Card.Content>
         </Card>
       ))}
@@ -225,23 +206,8 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
     color: theme.colors.textSecondary,
   },
-  sliderContainer: {
+  segmentedButtons: {
     marginBottom: theme.spacing.md,
-    paddingHorizontal: theme.spacing.sm,
-  },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.xs,
-  },
-  slider: {
-    height: 40,
-  },
-  currentSeverity: {
-    textAlign: 'center',
-    marginTop: theme.spacing.sm,
-    color: theme.colors.primary,
-    fontWeight: '500',
   },
   addAllButton: {
     marginTop: theme.spacing.sm,

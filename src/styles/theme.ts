@@ -20,6 +20,7 @@ export const palette = {
   border: '#e6dfd4',
   trackInactive: '#d8d1c5',
   infoBackground: '#f4efff',
+  secondaryContainer: '#f4efff',
   white: '#ffffff',
   error: '#d32f2f',
 } as const;

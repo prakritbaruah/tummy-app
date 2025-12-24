@@ -7,12 +7,12 @@ export const SYMPTOMS = [
   'Vomiting',
   'Gas',
   'Heartburn',
-  'Loss of Appetite',
+  'Loss of Appeti2te',
   'Fatigue',
 ] as const;
 
 export type SymptomName = typeof SYMPTOMS[number];
-export type Severity = 'Low' | 'Mild' | 'Moderate' | 'High' | 'Severe';
+export type Severity = 'Mild' | 'Moderate' | 'Severe';
 
 // Base type for symptom data
 export interface SymptomData {

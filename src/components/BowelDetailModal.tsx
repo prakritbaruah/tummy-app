@@ -52,18 +52,33 @@ export default function BowelDetailModal({
 
           <Divider style={styles.divider} />
 
-          <View style={styles.urgencyRow}>
+          <View style={styles.urgencyConsistencyRow}>
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Urgency:{' '}
             </Text>
             <Chip
               style={[
-                styles.urgencyChip,
                 { backgroundColor: getUrgencyColor(entry.urgency) },
               ]}
-              textStyle={styles.urgencyText}
+              textStyle={styles.urgencyConsistencyText}
             >
               {entry.urgency}
+            </Chip>
+          </View>
+
+          <Divider style={styles.divider} />
+
+          <View style={styles.urgencyConsistencyRow}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Consistency:{' '}
+            </Text>
+            <Chip
+              style={[
+                { backgroundColor: theme.colors.primary },
+              ]}
+              textStyle={styles.urgencyConsistencyText}
+            >
+              {entry.consistency}
             </Chip>
           </View>
 
@@ -149,14 +164,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.textHeading,
   },
-  urgencyRow: {
+  urgencyConsistencyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
   },
-  urgencyChip: {
-  },
-  urgencyText: {
+  urgencyConsistencyText: {
     color: theme.colors.white,
     fontWeight: '600',
   },
