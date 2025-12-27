@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, Card, List, Checkbox, HelperText, SegmentedButtons } from 'react-native-paper';
+import { Text, Button, Card, Chip, HelperText, SegmentedButtons } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { addSymptomEntryAsync } from '@/store/symptomsSlice';
 import { useNavigation } from '@react-navigation/native';
@@ -17,7 +17,6 @@ export default function SymptomsScreen() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [symptomInputs, setSymptomInputs] = useState<SymptomData[]>([]);
   const [selectedTime, setSelectedTime] = useState<Date>(new Date());
-  const [symptomListExpanded, setSymptomListExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const dispatch = useAppDispatch();
@@ -87,64 +86,50 @@ export default function SymptomsScreen() {
         Track your symptoms
       </Text>
       <Text variant="titleMedium" style={styles.label}>Select Symptoms</Text>
-      <View style={styles.dropdownContainer}>
-        <List.Section style={styles.dropdownCard}>
-          <List.Accordion
-            title={
-              selectedSymptoms.length > 0
-                ? `${selectedSymptoms.length} symptom${selectedSymptoms.length > 1 ? 's' : ''} selected`
-                : 'Choose symptoms'
-            }
-            expanded={symptomListExpanded}
-            onPress={() => setSymptomListExpanded(prev => !prev)}
-            left={() => null}
-            right={props => <List.Icon {...props} icon={symptomListExpanded ? 'chevron-up' : 'chevron-down'} />}
+      <View style={styles.symptomsContainer}>
+        {SYMPTOMS.map(symptom => (
+          <Chip
+            key={symptom}
+            selected={selectedSymptoms.includes(symptom)}
+            onPress={() => handleSymptomToggle(symptom)}
+            style={styles.symptomChip}
+            mode="flat"
           >
-            {SYMPTOMS.map(symptom => (
-              <List.Item
-                key={symptom}
-                title={symptom}
-                onPress={() => handleSymptomToggle(symptom)}
-                right={() => (
-                  <Checkbox
-                    status={selectedSymptoms.includes(symptom) ? 'checked' : 'unchecked'}
-                    onPress={() => handleSymptomToggle(symptom)}
-                  />
-                )}
-              />
-            ))}
-          </List.Accordion>
-        </List.Section>
-        {selectedSymptoms.length > 0 && (
-          <Text variant="bodySmall" style={styles.selectedHint}>
-            {selectedSymptoms.join(', ')}
-          </Text>
-        )}
+            {symptom}
+          </Chip>
+        ))}
       </View>
 
       {symptomInputs.length > 0 && (
-        <TimePickerCard value={selectedTime} onChange={setSelectedTime} />
-      )}
-
-      {symptomInputs.map((input) => (
-        <Card key={input.name} style={styles.symptomCard}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.symptomTitle}>{input.name}</Text>
-
-            <Text variant="titleSmall" style={styles.label}>Severity</Text>
-            <SegmentedButtons
-              value={input.severity}
-              onValueChange={(value) => handleSeverityChange(input.name, value as Severity)}
-              buttons={[
-                { value: 'Mild', label: 'Mild' },
-                { value: 'Moderate', label: 'Moderate' },
-                { value: 'Severe', label: 'Severe' },
-              ]}
-              style={styles.segmentedButtons}
+        <>
+          <View style={styles.timePickerContainer}>
+            <TimePickerCard 
+              value={selectedTime} 
+              onChange={setSelectedTime}
             />
-          </Card.Content>
-        </Card>
-      ))}
+          </View>
+
+          {symptomInputs.map((input) => (
+            <Card key={input.name} style={styles.symptomCard}>
+              <Card.Content>
+                <Text variant="titleMedium" style={styles.symptomTitle}>{input.name}</Text>
+
+                <Text variant="titleSmall" style={styles.severityLabel}>Severity</Text>
+                <SegmentedButtons
+                  value={input.severity}
+                  onValueChange={(value) => handleSeverityChange(input.name, value as Severity)}
+                  buttons={[
+                    { value: 'Mild', label: 'Mild' },
+                    { value: 'Moderate', label: 'Moderate' },
+                    { value: 'Severe', label: 'Severe' },
+                  ]}
+                  style={styles.segmentedButtons}
+                />
+              </Card.Content>
+            </Card>
+          ))}
+        </>
+      )}
 
       {error && (
         <HelperText type="error" visible style={styles.errorText}>
@@ -156,7 +141,10 @@ export default function SymptomsScreen() {
         <Button 
           mode="contained" 
           onPress={handleAddAllSymptoms}
-          style={styles.addAllButton}
+          style={[
+            styles.addAllButton,
+            symptomInputs.length === 1 && styles.addAllButtonSingle
+          ]}
           loading={status === 'loading'}
           disabled={status === 'loading'}
         >
@@ -176,42 +164,51 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   heading: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     textAlign: 'center',
     color: theme.colors.text,
   },
-  symptomCard: {
+  label: {
+    marginBottom: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+    fontWeight: '600',
+  },
+  symptomsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
     marginBottom: theme.spacing.md,
+  },
+  symptomChip: {
+    marginRight: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
+  },
+  symptomCard: {
+    marginBottom: theme.spacing.sm,
     backgroundColor: theme.colors.infoBackground,
     elevation: 2,
   },
-  label: {
-    marginBottom: theme.spacing.sm,
-    marginTop: theme.spacing.md,
-    fontWeight: '600',
-  },
   symptomTitle: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
     color: theme.colors.primary,
   },
-  dropdownContainer: {
-    marginBottom: theme.spacing.md,
-  },
-  dropdownCard: {
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.spacing.sm,
-    overflow: 'hidden',
-  },
-  selectedHint: {
+  severityLabel: {
+    marginBottom: theme.spacing.xs,
     marginTop: theme.spacing.xs,
-    color: theme.colors.textSecondary,
+    fontWeight: '600',
+  },
+  timePickerContainer: {
+    marginBottom: theme.spacing.sm,
   },
   segmentedButtons: {
-    marginBottom: theme.spacing.md,
+    marginBottom: 0,
   },
   addAllButton: {
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.md,
     marginBottom: theme.spacing.lg,
+  },
+  addAllButtonSingle: {
+    marginTop: theme.spacing.sm,
   },
   errorText: {
     marginTop: theme.spacing.md,
