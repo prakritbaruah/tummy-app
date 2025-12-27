@@ -1151,11 +1151,11 @@ describe('foodEntryService', () => {
       mockAuth();
       vi.spyOn(utils, 'getAuthenticatedUserId').mockResolvedValue(mockUser.id);
 
-      // Note: Results are ordered by created_at DESC, so most recent comes first
+      // Note: Results are ordered by occurred_at DESC, so most recent comes first
       const dishEventsData = [
         {
           id: 'dish-event-2',
-          created_at: new Date('2024-01-02T10:00:00Z').toISOString(),
+          occurred_at: new Date('2024-01-02T10:00:00Z').toISOString(),
           dish: {
             id: 'dish-2',
             dish_name: 'Matcha Latte',
@@ -1163,7 +1163,7 @@ describe('foodEntryService', () => {
         },
         {
           id: 'dish-event-1',
-          created_at: new Date('2024-01-01T10:00:00Z').toISOString(),
+          occurred_at: new Date('2024-01-01T10:00:00Z').toISOString(),
           dish: {
             id: 'dish-1',
             dish_name: 'Chocolate Croissant',
@@ -1203,7 +1203,7 @@ describe('foodEntryService', () => {
       const dishEventsData = [
         {
           id: 'dish-event-1',
-          created_at: new Date('2024-01-01T10:00:00Z').toISOString(),
+          occurred_at: new Date('2024-01-01T10:00:00Z').toISOString(),
           dish: {
             id: 'dish-1',
             dish_name: 'Chocolate Croissant',
