@@ -57,6 +57,7 @@ export interface DishEventRow {
   confirmed_by_user: boolean;
   deleted_at: string | null;
   created_at: string;
+  occurred_at: string;
 }
 
 export interface TriggerRow {

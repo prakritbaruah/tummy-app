@@ -114,6 +114,7 @@ describe('supabase integration (test database)', () => {
         consistency: 3,
         mucusPresent: false,
         bloodPresent: false,
+        deletedAt: null,
       });
 
       expect(entry.id).toBeDefined();
@@ -149,6 +150,7 @@ describe('supabase integration (test database)', () => {
         consistency: 4,
         mucusPresent: true,
         bloodPresent: false,
+        deletedAt: null,
       });
 
       expect(entry.id).toBeDefined();
@@ -202,6 +204,7 @@ describe('supabase integration (test database)', () => {
         consistency: 2,
         mucusPresent: false,
         bloodPresent: false,
+        deletedAt: null,
       });
 
       const entry2 = await createBowelEntry({
@@ -211,6 +214,7 @@ describe('supabase integration (test database)', () => {
         consistency: 5,
         mucusPresent: true,
         bloodPresent: true,
+        deletedAt: null,
       });
 
       expect(entry1.id).toBeDefined();

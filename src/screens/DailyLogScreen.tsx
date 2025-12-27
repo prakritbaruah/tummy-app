@@ -102,7 +102,7 @@ export default function DailyLogScreen() {
 
     // Add food entries grouped by date
     foodEntries.forEach((foodEntry) => {
-      const date = new Date(foodEntry.createdAt);
+      const date = new Date(foodEntry.occurredAt);
       const dateKey = date.toDateString();
       
       if (!entriesByDate.has(dateKey)) {
@@ -119,7 +119,7 @@ export default function DailyLogScreen() {
       dayEntry.foodEntries.push({
         dishEventId: foodEntry.dishEventId,
         dishName: foodEntry.dishName,
-        occurredAt: foodEntry.createdAt
+        occurredAt: foodEntry.occurredAt
       });
     });
 

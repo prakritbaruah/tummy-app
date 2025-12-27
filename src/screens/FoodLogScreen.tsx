@@ -8,7 +8,7 @@ import { createFoodEntry } from '@/data/foodEntryService';
 import { CreateFoodEntryResponse } from '@/types/foodEntry';
 
 type RootStackParamList = {
-  ConfirmFoodEntry: { response: CreateFoodEntryResponse };
+  ConfirmFoodEntry: { response: CreateFoodEntryResponse; initialOccuredAtTimestamp?: number };
   FoodLog: undefined;
 };
 
@@ -29,12 +29,19 @@ export default function FoodLogScreen() {
     setError(null);
 
     try {
-      const response = await createFoodEntry({
+      // Set occuredAt to  current time
+      const currentTime = Date.now();
+
+      const response = await createFoodEntry(currentTime, {
         raw_entry_text: foodText.trim(),
       });
 
-      // Navigate to confirmation screen with the response
-      navigation.navigate('ConfirmFoodEntry', { response });
+      // Navigate to confirmation screen with the response and current timestamp
+      // The user can adjust this timestamp in the confirmation screen
+      navigation.navigate('ConfirmFoodEntry', { 
+        response,
+        initialOccuredAtTimestamp: currentTime,
+      });
       
       // Reset form
       setFoodText('');

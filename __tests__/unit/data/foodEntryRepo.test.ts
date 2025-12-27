@@ -363,6 +363,7 @@ describe('foodEntryRepo', () => {
         confirmed_by_user: false,
         deleted_at: null,
         created_at: new Date().toISOString(),
+        occurred_at: new Date().toISOString(),
       };
 
       const single = vi.fn().mockReturnValue(Promise.resolve({ data: row, error: null }));
@@ -377,6 +378,7 @@ describe('foodEntryRepo', () => {
         rawEntryId: 'raw-entry-1',
         confirmedByUser: false,
         deletedAt: null,
+        occurredAt: Date.now(),
       });
 
       expect(insert).toHaveBeenCalled();
@@ -401,6 +403,7 @@ describe('foodEntryRepo', () => {
           rawEntryId: 'raw-entry-1',
           confirmedByUser: false,
           deletedAt: null,
+          occurredAt: Date.now(),
         }),
       ).rejects.toThrow('insert failed');
     });
@@ -641,6 +644,7 @@ describe('foodEntryRepo', () => {
           created_at: new Date().toISOString(),
           confirmed_by_user: true,
           deleted_at: null,
+          occurred_at: new Date().toISOString(),
         },
         {
           id: 'dish-event-2',
@@ -651,6 +655,7 @@ describe('foodEntryRepo', () => {
           created_at: new Date().toISOString(),
           confirmed_by_user: true,
           deleted_at: null,
+          occurred_at: new Date().toISOString(),
         },
       ];
 
@@ -684,6 +689,7 @@ describe('foodEntryRepo', () => {
           created_at: new Date().toISOString(),
           confirmed_by_user: true,
           deleted_at: null,
+          occurred_at: new Date().toISOString(),
         },
         // This one is deleted and should not be returned
         {
@@ -695,6 +701,7 @@ describe('foodEntryRepo', () => {
           created_at: new Date().toISOString(),
           confirmed_by_user: true,
           deleted_at: new Date().toISOString(),
+          occurred_at: new Date().toISOString(),
         },
       ];
 
@@ -756,6 +763,7 @@ describe('foodEntryRepo', () => {
         created_at: new Date().toISOString(),
         confirmed_by_user: false,
         deleted_at: deletedAtString,
+        occurred_at: new Date().toISOString(),
       };
 
       // Mock query chain: from('dish_events').update().eq('id').select().single()

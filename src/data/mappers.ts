@@ -155,6 +155,7 @@ export function toDishEventRow(
     raw_entry_id: entry.rawEntryId,
     confirmed_by_user: entry.confirmedByUser,
     deleted_at: entry.deletedAt != null ? new Date(entry.deletedAt).toISOString() : null,
+    occurred_at: new Date(entry.occurredAt).toISOString(),
   };
 }
 
@@ -168,6 +169,7 @@ export function fromDishEventRow(row: DishEventRow): DishEvent {
     confirmedByUser: row.confirmed_by_user,
     deletedAt: row.deleted_at !== null ? new Date(row.deleted_at).getTime() : null,
     createdAt: new Date(row.created_at).getTime(),
+    occurredAt: new Date(row.occurred_at).getTime(),
   };
 }
 

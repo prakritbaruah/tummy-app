@@ -392,3 +392,18 @@ export async function updateDishEventDeletedAt(
 
   return fromDishEventRow(data as DishEventRow);
 }
+
+// Update dish event occurred_at timestamp (for setting meal time)
+export async function updateDishEventOccurredAt(
+  dishEventIds: string[],
+  occurredAt: Date
+): Promise<void> {
+  const { error } = await supabase
+    .from('dish_events')
+    .update({ occurred_at: occurredAt.toISOString() })
+    .in('id', dishEventIds);
+
+  if (error) {
+    handleError(error);
+  }
+}

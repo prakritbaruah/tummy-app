@@ -378,7 +378,7 @@ describe('foodEntryFlow integration (test database)', () => {
     it(
       'creates new entry with multiple dishes and predicted triggers',
       async () => {
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant and Matcha Latte',
         });
 
@@ -453,7 +453,7 @@ describe('foodEntryFlow integration (test database)', () => {
     it(
       'creates entry with single dish',
       async () => {
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Cherry turnover',
         });
 
@@ -475,14 +475,14 @@ describe('foodEntryFlow integration (test database)', () => {
       'normalizes dish names correctly for matching',
       async () => {
         // Create first entry
-        const firstResult = await createFoodEntry({
+        const firstResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant',
         });
 
         const firstDishId = firstResult.dishes[0].dish_id;
 
         // Create second entry with slightly different casing/spacing
-        const secondResult = await createFoodEntry({
+        const secondResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'chocolate  croissant',
         });
 
@@ -500,7 +500,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'reuses existing dish and copies triggers from most recent event',
       async () => {
         // Create first entry
-        const firstResult = await createFoodEntry({
+        const firstResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant',
         });
 
@@ -515,6 +515,7 @@ describe('foodEntryFlow integration (test database)', () => {
 
         // Confirm first entry with triggers
         await confirmFoodEntry(firstResult.entry_id, {
+          occurred_at: Date.now(),
           confirmed_dishes: [
             {
               dish_event_id: firstDishEventId,
@@ -526,7 +527,7 @@ describe('foodEntryFlow integration (test database)', () => {
         });
 
         // Create second entry with same dish
-        const secondResult = await createFoodEntry({
+        const secondResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant',
         });
 
@@ -551,7 +552,7 @@ describe('foodEntryFlow integration (test database)', () => {
     it(
       'handles dish with no triggers',
       async () => {
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Grilled Salmon',
         });
 
@@ -575,7 +576,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'updates dish name and sets confirmed triggers',
       async () => {
         // Create entry
-        const createResult = await createFoodEntry({
+        const createResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant',
         });
 
@@ -599,6 +600,7 @@ describe('foodEntryFlow integration (test database)', () => {
               trigger_ids: [glutenId!, dairyId!],
             },
           ],
+          occurred_at: Date.now(),
         });
 
         // Verify response
@@ -654,7 +656,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'removes all triggers when empty array is provided',
       async () => {
         // Create entry
-        const createResult = await createFoodEntry({
+        const createResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant',
         });
 
@@ -674,6 +676,7 @@ describe('foodEntryFlow integration (test database)', () => {
               trigger_ids: glutenId ? [glutenId] : [],
             },
           ],
+          occurred_at: Date.now(),
         });
 
         // Then confirm with no triggers
@@ -686,6 +689,7 @@ describe('foodEntryFlow integration (test database)', () => {
               trigger_ids: [], // No triggers
             },
           ],
+          occurred_at: Date.now(),
         });
 
         expect(confirmResult.dishes[0].triggers).toBeDefined();
@@ -709,7 +713,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'handles multiple dishes in confirmation',
       async () => {
         // Create entry with multiple dishes
-        const createResult = await createFoodEntry({
+        const createResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant and Matcha Latte',
         });
 
@@ -736,6 +740,7 @@ describe('foodEntryFlow integration (test database)', () => {
               trigger_ids: caffeineId ? [caffeineId] : [],
             },
           ],
+          occurred_at: Date.now(),
         });
 
         expect(confirmResult.dishes).toHaveLength(2);
@@ -752,7 +757,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'preserves predicted_dish_triggers after confirmation',
       async () => {
         // Create entry
-        const createResult = await createFoodEntry({
+        const createResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant',
         });
 
@@ -780,6 +785,7 @@ describe('foodEntryFlow integration (test database)', () => {
               trigger_ids: dairyId ? [dairyId] : [],
             },
           ],
+          occurred_at: Date.now(),
         });
 
         // Verify predicted triggers are still there
@@ -802,14 +808,14 @@ describe('foodEntryFlow integration (test database)', () => {
       'handles dish name normalization with filler words',
       async () => {
         // Create entry with filler words
-        const firstResult = await createFoodEntry({
+        const firstResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Pasta and Meatballs',
         });
 
         const firstDishId = firstResult.dishes.find((d) => d.dish_name === 'Pasta')?.dish_id;
 
         // Create second entry with same dish but different wording
-        const secondResult = await createFoodEntry({
+        const secondResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Pasta with Meatballs',
         });
 
@@ -827,7 +833,7 @@ describe('foodEntryFlow integration (test database)', () => {
     it(
       'maintains referential integrity across tables',
       async () => {
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant',
         });
 
@@ -873,14 +879,14 @@ describe('foodEntryFlow integration (test database)', () => {
       'handles case-insensitive dish matching',
       async () => {
         // Create first entry
-        const firstResult = await createFoodEntry({
+        const firstResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate Croissant',
         });
 
         const firstDishId = firstResult.dishes[0].dish_id;
 
         // Create second entry with different case
-        const secondResult = await createFoodEntry({
+        const secondResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'CHOCOLATE CROISSANT',
         });
 
@@ -934,7 +940,7 @@ describe('foodEntryFlow integration (test database)', () => {
         });
 
         // Create entry - dish extraction should work, trigger prediction will fail
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Grilled Salmon',
         });
 
@@ -968,6 +974,7 @@ describe('foodEntryFlow integration (test database)', () => {
               trigger_ids: [glutenId!, dairyId!], // User manually selects triggers
             },
           ],
+          occurred_at: Date.now(),
         });
 
         // Verify confirmation worked
@@ -989,7 +996,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'correctly handles adding and removing triggers for a new dish',
       async () => {
         // Create a food entry with a new dish
-        const createResult = await createFoodEntry({
+        const createResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Pasta Carbonara',
         });
 
@@ -1031,6 +1038,7 @@ describe('foodEntryFlow integration (test database)', () => {
               trigger_ids: finalTriggerIds,
             },
           ],
+          occurred_at: Date.now(),
         });
 
         // Verify confirmation response
@@ -1122,7 +1130,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'soft deletes a dish event and filters it from queries',
       async () => {
         // Create a food entry
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Pasta with marinara sauce',
         });
 
@@ -1171,7 +1179,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'filters deleted dishes from getFoodEntriesForUser',
       async () => {
         // Create and confirm a food entry
-        const createResult = await createFoodEntry({
+        const createResult = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Chocolate chip cookies',
         });
 
@@ -1184,6 +1192,7 @@ describe('foodEntryFlow integration (test database)', () => {
               trigger_ids: [],
             },
           ],
+          occurred_at: Date.now(),
         });
 
         // Verify it appears in getFoodEntriesForUser
@@ -1209,7 +1218,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'does not include deleted dishes when confirming food entry',
       async () => {
         // Create a food entry with multiple dishes
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Pizza and garlic bread',
         });
 
@@ -1241,6 +1250,7 @@ describe('foodEntryFlow integration (test database)', () => {
               final_dish_name: d.dish_name,
               trigger_ids: [],
             })),
+            occurred_at: Date.now(),
           });
 
           // Verify deleted dish was not confirmed
@@ -1270,7 +1280,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'marks dish events as confirmed after confirmation',
       async () => {
         // Create a food entry
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Caesar salad',
         });
 
@@ -1293,6 +1303,7 @@ describe('foodEntryFlow integration (test database)', () => {
             final_dish_name: d.dish_name,
             trigger_ids: [],
           })),
+          occurred_at: Date.now(),
         });
 
         // Verify all dish events are now confirmed
@@ -1316,7 +1327,7 @@ describe('foodEntryFlow integration (test database)', () => {
       'only returns confirmed dishes in getFoodEntriesForUser',
       async () => {
         // Create a food entry
-        const result = await createFoodEntry({
+        const result = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Fish and chips',
         });
 
@@ -1333,6 +1344,7 @@ describe('foodEntryFlow integration (test database)', () => {
             final_dish_name: d.dish_name,
             trigger_ids: [],
           })),
+          occurred_at: Date.now(),
         });
 
         // Verify it appears after confirmation
@@ -1351,11 +1363,11 @@ describe('foodEntryFlow integration (test database)', () => {
       'combines confirmed_by_user and deleted_at filters correctly',
       async () => {
         // Create and confirm multiple food entries
-        const result1 = await createFoodEntry({
+        const result1 = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Burger and fries',
         });
 
-        const result2 = await createFoodEntry({
+        const result2 = await createFoodEntry(Date.now(), {
           raw_entry_text: 'Ice cream sundae',
         });
 
@@ -1367,6 +1379,7 @@ describe('foodEntryFlow integration (test database)', () => {
             final_dish_name: d.dish_name,
             trigger_ids: [],
           })),
+          occurred_at: Date.now(),
         });
 
         await confirmFoodEntry(result2.entry_id, {
@@ -1376,6 +1389,7 @@ describe('foodEntryFlow integration (test database)', () => {
             final_dish_name: d.dish_name,
             trigger_ids: [],
           })),
+          occurred_at: Date.now(),
         });
 
         // Verify both appear

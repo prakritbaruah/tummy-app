@@ -24,6 +24,7 @@ import {
   getTriggersByNames,
   updateDish,
   updateDishEventConfirmation,
+  updateDishEventOccurredAt,
 } from '@/data/foodEntryRepo';
 import { supabase } from '@/lib/supabase';
 import { getAuthenticatedUserId } from '@/data/utils';
@@ -35,8 +36,11 @@ const FILENAME = 'foodEntryService.ts';
 /**
  * Creates a new food entry from raw text, extracts dishes, matches them to existing dishes,
  * and predicts triggers.
+ * @param occurredAtTimestamp - The timestamp in milliseconds when the meal was actually eaten.
+ * @returns The created food entry response.
  */
 export async function createFoodEntry(
+  occurredAtTimestamp: number,
   request: CreateFoodEntryRequest,
 ): Promise<CreateFoodEntryResponse> {
   logger.info(FILENAME, 'createFoodEntry', 'Creating food entry', { rawEntryTextLength: request.raw_entry_text.length });
@@ -98,6 +102,7 @@ export async function createFoodEntry(
       rawEntryId: rawEntry.id,
       confirmedByUser: false,
       deletedAt: null,
+      occurredAt: occurredAtTimestamp,
     });
     logger.info(FILENAME, 'createFoodEntry', 'Dish event created', { dishEventId: dishEvent.id, dishId: dish.id });
 
@@ -313,14 +318,36 @@ export async function confirmFoodEntry(
   }
   logger.info(FILENAME, 'confirmFoodEntry', 'All confirmed dishes processed');
 
-  // Step 2: Mark all dish events for this raw entry as confirmed
+  // Step 2: Update occurred_at timestamps only if they changed
   const dishEvents = await getDishEventsByRawFoodEntryId(rawEntryId);
   const dishEventIds = dishEvents.map((de) => de.id);
+  
+  // Check if the requested occurred_at differs from existing timestamps
+  // All dish events for the same raw entry should have the same occurred_at
+  const existingOccurredAt = dishEvents.length > 0 ? dishEvents[0].occurredAt : null;
+  const requestedOccurredAt = request.occurred_at;
+  
+  // Only update if the timestamp actually changed
+  if (existingOccurredAt !== requestedOccurredAt) {
+    logger.info(FILENAME, 'confirmFoodEntry', 'Updating dish event occurred_at timestamps', { 
+      dishEventCount: dishEventIds.length,
+      oldOccurredAt: existingOccurredAt ? new Date(existingOccurredAt).toISOString() : 'null',
+      newOccurredAt: new Date(requestedOccurredAt).toISOString()
+    });
+    await updateDishEventOccurredAt(dishEventIds, new Date(requestedOccurredAt));
+    logger.info(FILENAME, 'confirmFoodEntry', 'Dish event occurred_at timestamps updated successfully');
+  } else {
+    logger.info(FILENAME, 'confirmFoodEntry', 'Skipping occurred_at update - timestamp unchanged', {
+      occurredAt: new Date(requestedOccurredAt).toISOString()
+    });
+  }
+  
+  // Step 3: Mark all dish events for this raw entry as confirmed
   logger.info(FILENAME, 'confirmFoodEntry', 'Marking dish events as confirmed', { dishEventCount: dishEventIds.length });
   await updateDishEventConfirmation(dishEventIds, true);
   logger.info(FILENAME, 'confirmFoodEntry', 'Dish events marked as confirmed successfully');
 
-  // Step 3: Build response with final state
+  // Step 4: Build response with final state
   logger.info(FILENAME, 'confirmFoodEntry', 'Retrieved dish events', { dishEventCount: dishEvents.length });
 
   const confirmedTriggers = await getConfirmedTriggersByDishEventIds(dishEventIds);
@@ -373,12 +400,12 @@ export async function confirmFoodEntry(
 
 /**
  * Fetches all dish events with dish names for the authenticated user.
- * Returns dish events directly using their created_at timestamp.
+ * Returns dish events using their occurred_at timestamp (when the meal was eaten).
  */
 export async function getFoodEntriesForUser(): Promise<Array<{
   dishEventId: string;
   dishName: string;
-  createdAt: number; // timestamp
+  occurredAt: number; // timestamp
 }>> {
   const userId = await getAuthenticatedUserId();
   logger.info(FILENAME, 'getFoodEntriesForUser', 'Fetching food entries for user', { userId });
@@ -388,7 +415,7 @@ export async function getFoodEntriesForUser(): Promise<Array<{
     .from('dish_events')
     .select(`
       id,
-      created_at,
+      occurred_at,
       dish:dish_id (
         id,
         dish_name
@@ -397,7 +424,7 @@ export async function getFoodEntriesForUser(): Promise<Array<{
     .eq('user_id', userId)
     .eq('confirmed_by_user', true)
     .is('deleted_at', null)
-    .order('created_at', { ascending: false });
+    .order('occurred_at', { ascending: false });
 
   if (dishEventsError) {
     logger.error(FILENAME, 'getFoodEntriesForUser', 'Failed to fetch dish events', dishEventsError);
@@ -415,12 +442,12 @@ export async function getFoodEntriesForUser(): Promise<Array<{
   const result = dishEventsData.map((row: any) => {
     const dish = row.dish;
     const dishName = dish?.dish_name || 'Unknown';
-    const createdAt = new Date(row.created_at).getTime();
+    const occurredAt = new Date(row.occurred_at).getTime();
 
     return {
       dishEventId: row.id,
       dishName,
-      createdAt,
+      occurredAt,
     };
   });
 

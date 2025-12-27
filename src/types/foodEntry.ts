@@ -31,6 +31,7 @@ export interface CreateFoodEntryResponse {
 
 export interface ConfirmFoodEntryRequest {
   confirmed_dishes: ConfirmedDish[];
+  occurred_at: number; // Timestamp in milliseconds. Updates all dish_events' occurred_at to reflect when the meal was actually eaten.
 }
 
 export interface ConfirmFoodEntryResponse {

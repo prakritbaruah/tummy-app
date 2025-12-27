@@ -105,6 +105,7 @@ describe('foodEntryService', () => {
         confirmedByUser: false,
         deletedAt: null,
         createdAt: Date.now(),
+        occurredAt: Date.now(),
       });({
         id: 'dish-event-1',
         userId: mockUser.id,
@@ -113,6 +114,7 @@ describe('foodEntryService', () => {
         rawEntryId: 'raw-entry-1',
         confirmedByUser: false,
         createdAt: Date.now(),
+        occurredAt: Date.now(),
       });
 
       // Step 4a: Mock LLM trigger prediction (for new dishes)
@@ -152,7 +154,7 @@ describe('foodEntryService', () => {
       ]);
 
       // Execute the service function
-      const result = await createFoodEntry({
+      const result = await createFoodEntry(Date.now(), {
         raw_entry_text: 'Chocolate croissant',
       });
 
@@ -233,6 +235,7 @@ describe('foodEntryService', () => {
         confirmedByUser: false,
         deletedAt: null,
         createdAt: Date.now(),
+        occurredAt: Date.now(),
       });
 
       vi.spyOn(foodEntryRepo, 'getTriggersByNames').mockResolvedValue([
@@ -282,7 +285,7 @@ describe('foodEntryService', () => {
       // Spy on LLM to verify it's NOT called for existing dishes
       const llmPredictSpy = vi.spyOn(llmService, 'llmPredictTriggers');
 
-      const result = await createFoodEntry({
+      const result = await createFoodEntry(Date.now(), {
         raw_entry_text: 'Chocolate croissant',
       });
 
@@ -363,6 +366,7 @@ describe('foodEntryService', () => {
           confirmedByUser: false,
           deletedAt: null,
           createdAt: Date.now(),
+          occurredAt: Date.now(),
         })
         .mockResolvedValueOnce({
           id: 'dish-event-2',
@@ -373,6 +377,7 @@ describe('foodEntryService', () => {
           confirmedByUser: false,
           deletedAt: null,
           createdAt: Date.now(),
+          occurredAt: Date.now(),
         });
 
       vi.spyOn(llmService, 'llmPredictTriggers')
@@ -423,7 +428,7 @@ describe('foodEntryService', () => {
         },
       ]);
 
-      const result = await createFoodEntry({
+      const result = await createFoodEntry(Date.now(), {
         raw_entry_text: 'Chocolate croissant and matcha latte',
       });
 
@@ -459,6 +464,7 @@ describe('foodEntryService', () => {
         created_at: new Date().toISOString(),
         confirmed_by_user: false,
         deleted_at: null,
+        occurred_at: new Date().toISOString(),
       };
 
       vi.spyOn(foodEntryRepo, 'getDishEventsByRawFoodEntryId').mockResolvedValue([
@@ -471,6 +477,7 @@ describe('foodEntryService', () => {
           confirmedByUser: false,
           deletedAt: null,
           createdAt: Date.now(),
+          occurredAt: Date.now(),
         },
       ]);
 
@@ -536,6 +543,7 @@ describe('foodEntryService', () => {
       vi.spyOn(foodEntryRepo, 'updateDishEventConfirmation').mockResolvedValue(undefined);
 
       const result = await confirmFoodEntry('raw-entry-1', {
+        occurred_at: Date.now(),
         confirmed_dishes: [
           {
             dish_event_id: 'dish-event-1',
@@ -571,6 +579,7 @@ describe('foodEntryService', () => {
           confirmedByUser: false,
           deletedAt: null,
           createdAt: Date.now(),
+          occurredAt: Date.now(),
         },
       ]);
 
@@ -614,6 +623,7 @@ describe('foodEntryService', () => {
       vi.spyOn(foodEntryRepo, 'updateDishEventConfirmation').mockResolvedValue(undefined);
 
       const result = await confirmFoodEntry('raw-entry-1', {
+        occurred_at: Date.now(),
         confirmed_dishes: [
           {
             dish_event_id: 'dish-event-1',
@@ -645,6 +655,7 @@ describe('foodEntryService', () => {
               trigger_ids: [],
             },
           ],
+          occurred_at: Date.now(),
         }),
       ).rejects.toThrow('Dish event not found: nonexistent');
     });
@@ -663,6 +674,7 @@ describe('foodEntryService', () => {
           confirmedByUser: false,
           deletedAt: null,
           createdAt: Date.now(),
+          occurredAt: Date.now(),
         },
       ]);
 
@@ -684,6 +696,7 @@ describe('foodEntryService', () => {
               trigger_ids: [],
             },
           ],
+          occurred_at: Date.now(),
         }),
       ).rejects.toThrow('Dish not found: not found');
     });
@@ -702,6 +715,7 @@ describe('foodEntryService', () => {
           confirmedByUser: false,
           deletedAt: null,
           createdAt: Date.now(),
+          occurredAt: Date.now(),
         },
       ]);
 
@@ -730,6 +744,7 @@ describe('foodEntryService', () => {
               trigger_ids: [],
             },
           ],
+          occurred_at: Date.now(),
         }),
       ).rejects.toThrow('Dish does not belong to the user');
     });
@@ -752,6 +767,7 @@ describe('foodEntryService', () => {
           confirmedByUser: false,
           deletedAt: null,
           createdAt: Date.now(),
+          occurredAt: Date.now(),
         },
       ]);
 
@@ -794,6 +810,7 @@ describe('foodEntryService', () => {
               trigger_ids: [],
             },
           ],
+          occurred_at: Date.now(),
         }),
       ).rejects.toThrow('Cannot update dish name: a dish with normalized name');
     });
@@ -817,6 +834,7 @@ describe('foodEntryService', () => {
           confirmedByUser: false,
           deletedAt: null,
           createdAt: Date.now(),
+          occurredAt: Date.now(),
         },
         {
           id: 'dish-event-2',
@@ -827,6 +845,7 @@ describe('foodEntryService', () => {
           createdAt: Date.now(),
           confirmedByUser: false,
           deletedAt: null,
+          occurredAt: Date.now(),
         },
       ]);
 
@@ -925,11 +944,202 @@ describe('foodEntryService', () => {
             trigger_ids: ['trigger-2'],
           },
         ],
+        occurred_at: Date.now(),
       });
 
       expect(result.dishes).toHaveLength(2);
       expect(result.dishes[0].dish_name).toBe('Chocolate Croissant');
       expect(result.dishes[1].dish_name).toBe('Matcha Latte');
+    });
+
+    /**
+     * Helper function to set up common mocks for occurred_at timestamp tests
+     */
+    function setupOccurredAtTestMocks(existingOccurredAt: number) {
+      mockAuth();
+      vi.spyOn(utils, 'getAuthenticatedUserId').mockResolvedValue(mockUser.id);
+
+      // Mock two dish events for the same raw entry
+      vi.spyOn(foodEntryRepo, 'getDishEventsByRawFoodEntryId').mockResolvedValue([
+        {
+          id: 'dish-event-1',
+          userId: mockUser.id,
+          dishId: 'dish-1',
+          predictedDishId: 'predicted-dish-1',
+          rawEntryId: 'raw-entry-1',
+          confirmedByUser: false,
+          deletedAt: null,
+          createdAt: Date.now(),
+          occurredAt: existingOccurredAt,
+        },
+        {
+          id: 'dish-event-2',
+          userId: mockUser.id,
+          dishId: 'dish-2',
+          predictedDishId: 'predicted-dish-2',
+          rawEntryId: 'raw-entry-1',
+          createdAt: Date.now(),
+          confirmedByUser: false,
+          deletedAt: null,
+          occurredAt: existingOccurredAt,
+        },
+      ]);
+
+      const dishRow1: DishRow = {
+        id: 'dish-1',
+        user_id: mockUser.id,
+        dish_name: 'Chocolate Croissant',
+        normalized_dish_name: 'chocolate croissant',
+        dish_embedding_id: null,
+        created_at: new Date().toISOString(),
+      };
+
+      const dishRow2: DishRow = {
+        id: 'dish-2',
+        user_id: mockUser.id,
+        dish_name: 'Matcha Latte',
+        normalized_dish_name: 'matcha latte',
+        dish_embedding_id: null,
+        created_at: new Date().toISOString(),
+      };
+
+      // Track call count to return correct dish for each query
+      let callCount = 0;
+      const single = vi.fn().mockImplementation(() => {
+        callCount++;
+        // First dish lookup (callCount 1)
+        if (callCount === 1) {
+          return Promise.resolve({
+            data: dishRow1,
+            error: null,
+          });
+        }
+        // Second dish lookup (callCount 2)
+        if (callCount === 2) {
+          return Promise.resolve({
+            data: dishRow2,
+            error: null,
+          });
+        }
+        // If names were changed, we'd check for conflicts (callCount 3, 4, etc.)
+        // In this test, names don't change, so these calls won't happen
+        return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'not found' } });
+      });
+
+      const eq2 = vi.fn().mockReturnValue({ single });
+      const eq1 = vi.fn().mockReturnValue({ eq: eq2, single });
+      const select = vi.fn().mockReturnValue({ eq: eq1, single });
+      (supabase as any).from = vi.fn().mockReturnValue({ select });
+
+      vi.spyOn(dishHelpers, 'upsertDishTriggersForEvent').mockResolvedValue(undefined);
+
+      vi.spyOn(foodEntryRepo, 'getConfirmedTriggersByDishEventIds').mockResolvedValue([
+        {
+          id: 'dish-trigger-1',
+          dishId: 'dish-1',
+          dishEventId: 'dish-event-1',
+          triggerId: 'trigger-1',
+          createdAt: Date.now(),
+        },
+        {
+          id: 'dish-trigger-2',
+          dishId: 'dish-2',
+          dishEventId: 'dish-event-2',
+          triggerId: 'trigger-2',
+          createdAt: Date.now(),
+        },
+      ]);
+
+      vi.spyOn(foodEntryRepo, 'getTriggerById')
+        .mockResolvedValueOnce({
+          id: 'trigger-1',
+          triggerName: 'gluten',
+          createdAt: Date.now(),
+        })
+        .mockResolvedValueOnce({
+          id: 'trigger-2',
+          triggerName: 'caffeine',
+          createdAt: Date.now(),
+        });
+
+      // Mock updateDishEventConfirmation
+      vi.spyOn(foodEntryRepo, 'updateDishEventConfirmation').mockResolvedValue(undefined);
+      
+      // Mock updateDishEventOccurredAt
+      vi.spyOn(foodEntryRepo, 'updateDishEventOccurredAt').mockResolvedValue(undefined);
+    };
+
+    /**
+     * Tests that occurred_at timestamp is updated when it changes
+     */
+    it('updates occurred_at timestamp when it changes', async () => {
+      const existingOccurredAt = 1710000000000;
+      const newOccurredAt = 1710000000001;
+      
+      setupOccurredAtTestMocks(existingOccurredAt);
+
+      const result = await confirmFoodEntry('raw-entry-1', {
+        confirmed_dishes: [
+          {
+            dish_event_id: 'dish-event-1',
+            dish_id: 'dish-1',
+            final_dish_name: 'Chocolate Croissant',
+            trigger_ids: ['trigger-1'],
+          },
+          {
+            dish_event_id: 'dish-event-2',
+            dish_id: 'dish-2',
+            final_dish_name: 'Matcha Latte',
+            trigger_ids: ['trigger-2'],
+          },
+        ],
+        occurred_at: newOccurredAt,
+      });
+
+      expect(result.dishes).toHaveLength(2);
+      expect(result.dishes[0].dish_name).toBe('Chocolate Croissant');
+      expect(result.dishes[1].dish_name).toBe('Matcha Latte');
+      
+      // Verify that updateDishEventOccurredAt was called with the new timestamp
+      expect(foodEntryRepo.updateDishEventOccurredAt).toHaveBeenCalledTimes(1);
+      expect(foodEntryRepo.updateDishEventOccurredAt).toHaveBeenCalledWith(
+        ['dish-event-1', 'dish-event-2'],
+        new Date(newOccurredAt)
+      );
+    });
+
+    /**
+     * Tests that occurred_at timestamp is NOT updated when it hasn't changed
+     */
+    it('does not update occurred_at timestamp when it has not changed', async () => {
+      const existingOccurredAt = 1710000000000;
+      
+      setupOccurredAtTestMocks(existingOccurredAt);
+
+      const result = await confirmFoodEntry('raw-entry-1', {
+        confirmed_dishes: [
+          {
+            dish_event_id: 'dish-event-1',
+            dish_id: 'dish-1',
+            final_dish_name: 'Chocolate Croissant',
+            trigger_ids: ['trigger-1'],
+          },
+          {
+            dish_event_id: 'dish-event-2',
+            dish_id: 'dish-2',
+            final_dish_name: 'Matcha Latte',
+            trigger_ids: ['trigger-2'],
+          },
+        ],
+        occurred_at: existingOccurredAt, // Same as existing
+      });
+
+      expect(result.dishes).toHaveLength(2);
+      expect(result.dishes[0].dish_name).toBe('Chocolate Croissant');
+      expect(result.dishes[1].dish_name).toBe('Matcha Latte');
+      
+      // Verify that updateDishEventOccurredAt was NOT called
+      expect(foodEntryRepo.updateDishEventOccurredAt).not.toHaveBeenCalled();
     });
   });
 
@@ -975,7 +1185,7 @@ describe('foodEntryService', () => {
       expect(eqUser).toHaveBeenCalledWith('user_id', mockUser.id);
       expect(eqConfirmed).toHaveBeenCalledWith('confirmed_by_user', true);
       expect(is).toHaveBeenCalledWith('deleted_at', null);
-      expect(order).toHaveBeenCalledWith('created_at', { ascending: false });
+      expect(order).toHaveBeenCalledWith('occurred_at', { ascending: false });
 
       // Verify results
       expect(result).toHaveLength(2);

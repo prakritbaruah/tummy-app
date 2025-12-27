@@ -37,6 +37,7 @@ export interface DishEvent {
   confirmedByUser: boolean;
   deletedAt: Timestamp | null;
   createdAt: Timestamp;
+  occurredAt: Timestamp;
 }
 
 export interface Trigger {

@@ -23,10 +23,11 @@ import {
 } from '@/types/foodEntry';
 import { Trigger } from '@/types/dish';
 import { getTriggerDisplayText } from '@/data/trigger';
+import { TimePickerCard } from '@/components';
 const FILENAME = 'ConfirmFoodEntryScreen.tsx';
 
 type RootStackParamList = {
-  ConfirmFoodEntry: { response: CreateFoodEntryResponse };
+  ConfirmFoodEntry: { response: CreateFoodEntryResponse; initialOccuredAtTimestamp?: number };
   FoodLog: undefined;
 };
 
@@ -41,7 +42,7 @@ interface DishState {
 export default function ConfirmFoodEntryScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ConfirmFoodEntryRouteProp>();
-  const { response } = route.params;
+  const { response, initialOccuredAtTimestamp } = route.params;
 
   const [dishes, setDishes] = useState<DishWithTriggers[]>(response.dishes);
   const [dishStates, setDishStates] = useState<Map<string, DishState>>(new Map());
@@ -53,6 +54,10 @@ export default function ConfirmFoodEntryScreen() {
   const [selectedDishEventId, setSelectedDishEventId] = useState<string | null>(null);
   const [isAddingDish, setIsAddingDish] = useState(false);
   const [isDeletingDish, setIsDeletingDish] = useState<string | null>(null);
+  // Initialize meal timestamp from route params or default to current time
+  const [mealTimestamp, setMealTimestamp] = useState<Date>(
+    initialOccuredAtTimestamp ? new Date(initialOccuredAtTimestamp) : new Date()
+  );
 
   // Initialize dish states with predicted triggers
   useEffect(() => {
@@ -177,6 +182,8 @@ export default function ConfirmFoodEntryScreen() {
       });
 
       // Create dish_event
+      // Use the same occurredAt timestamp as the rest of the meal entry
+      // This ensures all dishes in the same meal have the same occurred_at timestamp
       const dishEvent = await createDishEvent({
         userId,
         dishId: dish.id,
@@ -184,6 +191,7 @@ export default function ConfirmFoodEntryScreen() {
         rawEntryId,
         confirmedByUser: false,
         deletedAt: null,
+        occurredAt: mealTimestamp.getTime(),
       });
 
       // Create new DishWithTriggers object
@@ -279,6 +287,7 @@ export default function ConfirmFoodEntryScreen() {
 
       await confirmFoodEntry(response.entry_id, {
         confirmed_dishes: confirmedDishes,
+        occurred_at: mealTimestamp.getTime(),
       });
 
       // Navigate to DailyLog tab
@@ -316,6 +325,11 @@ export default function ConfirmFoodEntryScreen() {
         <Text variant="bodyMedium" style={styles.subtitle}>
           Review the dishes and triggers, then confirm to log your meal.
         </Text>
+
+        <TimePickerCard
+          value={mealTimestamp}
+          onChange={setMealTimestamp}
+        />
 
         <Button
           mode="outlined"

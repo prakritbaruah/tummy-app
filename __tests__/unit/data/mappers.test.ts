@@ -190,6 +190,7 @@ describe('mappers', () => {
       rawEntryId: 'rf1',
       confirmedByUser: false,
       deletedAt: null,
+      occurredAt: 1710000000000,
     };
 
     const row = toDishEventRow(entry);
@@ -221,6 +222,7 @@ describe('mappers', () => {
       rawEntryId: 'rf1',
       confirmedByUser: false,
       deletedAt: null,
+      occurredAt: 1710000000000,
     };
 
     const row = toDishEventRow(entry);
