@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, Text as RNText, Platform, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, Text as RNText, Platform } from 'react-native';
 import { Text, Card } from 'react-native-paper';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { theme } from '@/styles';
@@ -11,87 +11,41 @@ interface DateTimePickerCardProps {
 }
 
 export default function TimePickerCard({ value, onChange }: DateTimePickerCardProps) {
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
-  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
+  const handleDateTimeChange = (event: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS === 'android') {
-      setShowDatePicker(false);
+      setShowPicker(false);
     }
     if (date) {
-      // Preserve the time from current value, update only the date
-      const newDate = new Date(value);
-      newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-      onChange(newDate);
-    }
-  };
-
-  const handleTimeChange = (event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowTimePicker(false);
-    }
-    if (date) {
-      // Preserve the date from current value, update only the time
-      const newDate = new Date(value);
-      newDate.setHours(date.getHours(), date.getMinutes());
-      onChange(newDate);
+      onChange(date);
     }
   };
 
   return (
     <Card style={styles.card}>
-      {/* Date Row */}
-      <TouchableOpacity 
-        activeOpacity={0.7}
-        onPress={() => {
-          setShowDatePicker(!showDatePicker);
-          setShowTimePicker(false);
-        }}
-      >
-        <Card.Content style={styles.rowHeader}>
-          <Text variant="titleMedium" style={styles.label}>Date</Text>
-          <RNText style={styles.valueText}>{formatDate(value, 'short')}</RNText>
-        </Card.Content>
-      </TouchableOpacity>
-      {showDatePicker && (
-        <Card.Content style={styles.pickerContainer}>
-          <DateTimePicker
-            value={value}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
-            accentColor={theme.colors.primary}
-            style={styles.inlinePicker}
-            maximumDate={new Date()}
-          />
-        </Card.Content>
-      )}
-
-      {/* Divider */}
-      <View style={styles.divider} />
-
       {/* Time Row */}
       <TouchableOpacity 
         activeOpacity={0.7}
-        onPress={() => {
-          setShowTimePicker(!showTimePicker);
-          setShowDatePicker(false);
-        }}
+        onPress={() => setShowPicker(!showPicker)}
       >
         <Card.Content style={styles.rowHeader}>
           <Text variant="titleMedium" style={styles.label}>Time</Text>
-          <RNText style={styles.valueText}>{formatTime(value)}</RNText>
+          <RNText style={styles.valueText}>
+            {formatDate(value, 'short')} {formatTime(value)}
+          </RNText>
         </Card.Content>
       </TouchableOpacity>
-      {showTimePicker && (
+      {showPicker && (
         <Card.Content style={styles.pickerContainer}>
           <DateTimePicker
             value={value}
-            mode="time"
+            mode="datetime"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleTimeChange}
+            onChange={handleDateTimeChange}
             accentColor={theme.colors.primary}
             style={styles.inlinePicker}
+            maximumDate={new Date()}
           />
         </Card.Content>
       )}
@@ -118,11 +72,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.primary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.border,
-    marginHorizontal: theme.spacing.md,
   },
   pickerContainer: {
     alignItems: 'center',
