@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -15,6 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { store } from '@/store';
 import { paperTheme, navigationTheme } from '@/styles';
 import { AuthProvider, useAuth } from '@/contexts';
+import { useAppInitialization } from '@/hooks/useAppInitialization';
 
 // Import screens
 import HomeScreen from '@/screens/HomeScreen';
@@ -27,7 +28,7 @@ import AddScreen from '@/screens/AddScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import SignUpScreen from '@/screens/SignUpScreen';
 import EmailConfirmationScreen from '@/screens/EmailConfirmationScreen';
-import AuthLoadingScreen from '@/screens/AuthLoadingScreen';
+import AppLoadingScreen from '@/screens/AppLoadingScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -110,11 +111,7 @@ function TabNavigator() {
 }
 
 function AuthNavigator() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <AuthLoadingScreen />;
-  }
+  const { user } = useAuth();
 
   if (!user) {
     return (
@@ -182,7 +179,7 @@ function AuthNavigator() {
   );
 }
 
-export default function App() {
+function AppContent() {
   const [fontsLoaded] = useFonts({
     NunitoRegular: Nunito_400Regular,
     NunitoSemiBold: Nunito_600SemiBold,
@@ -190,31 +187,52 @@ export default function App() {
     LeagueSpartanSemiBold: LeagueSpartan_600SemiBold,
     LeagueSpartanBold: LeagueSpartan_700Bold,
   });
+  const { user, loading: authLoading } = useAuth();
+  const { isLoading: appDataLoading } = useAppInitialization();
+  const [startTime] = useState(() => Date.now());
+  const [showApp, setShowApp] = useState(false);
 
   useEffect(() => {
     void SplashScreen.preventAutoHideAsync();
   }, []);
 
   useEffect(() => {
-    if (fontsLoaded) {
-      void SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
+    const initializeApp = async () => {
+      // Wait for fonts, auth, and data to all be ready
+      if (fontsLoaded && !authLoading && !appDataLoading) {
+        // Ensure minimum delay from start (use the longer of the two delays)
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, 2000 - elapsed);
+        await new Promise(resolve => setTimeout(resolve, remaining));
+        void SplashScreen.hideAsync();
+        setShowApp(true);
+      }
+    };
 
-  if (!fontsLoaded) {
-    return null;
+    void initializeApp();
+  }, [fontsLoaded, authLoading, appDataLoading, startTime]);
+
+  // Show loading screen until everything is ready
+  if (!fontsLoaded || authLoading || appDataLoading || !showApp) {
+    return <AppLoadingScreen />;
   }
 
   return (
+    <SafeAreaProvider>
+      <PaperProvider theme={paperTheme}>
+        <NavigationContainer theme={navigationTheme}>
+          <AuthNavigator />
+        </NavigationContainer>
+      </PaperProvider>
+    </SafeAreaProvider>
+  );
+}
+
+export default function App() {
+  return (
     <StoreProvider store={store}>
       <AuthProvider>
-        <SafeAreaProvider>
-          <PaperProvider theme={paperTheme}>
-            <NavigationContainer theme={navigationTheme}>
-              <AuthNavigator />
-            </NavigationContainer>
-          </PaperProvider>
-        </SafeAreaProvider>
+        <AppContent />
       </AuthProvider>
     </StoreProvider>
   );
